@@ -193,9 +193,9 @@ export function exportExecutiveSummaryPDF(data: ExecutiveSummaryData) {
   // ─── Role info card ───
   y = 50;
 
-  // Yellow accent bar
+  // Yellow accent bar (full height of card)
   doc.setFillColor(245, 255, 128);
-  doc.rect(margin, y, 3, 24, "F");
+  doc.rect(margin, y, 3, 30, "F");
 
   // Role title
   doc.setFontSize(14);
@@ -203,43 +203,42 @@ export function exportExecutiveSummaryPDF(data: ExecutiveSummaryData) {
   doc.setFont("helvetica", "bold");
   doc.text(data.jobTitle, margin + 8, y + 7);
 
-  // Track
+  // Track label
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
   doc.setFont("helvetica", "normal");
   doc.text(data.track, margin + 8, y + 14);
 
-  // Level badge (right-aligned)
+  // Level badge + confidence on the same line, below track
   const levelText = `${data.recommendedLevel} — ${data.levelTitle}`;
-  const levelTextWidth = doc.getTextWidth(levelText);
-  const badgeX = pageWidth - margin - levelTextWidth - 12;
-  const badgeY = y + 1;
-  doc.setFillColor(26, 26, 26);
-  doc.roundedRect(badgeX, badgeY, levelTextWidth + 12, 10, 2, 2, "F");
   doc.setFontSize(10);
-  doc.setTextColor(245, 255, 128);
   doc.setFont("helvetica", "bold");
-  doc.text(levelText, badgeX + 6, badgeY + 7);
+  const levelTextWidth = doc.getTextWidth(levelText);
+  const badgeX = margin + 8;
+  const badgeY = y + 19;
+  doc.setFillColor(26, 26, 26);
+  doc.roundedRect(badgeX, badgeY, levelTextWidth + 12, 9, 2, 2, "F");
+  doc.setTextColor(245, 255, 128);
+  doc.text(levelText, badgeX + 6, badgeY + 6.5);
 
-  // Confidence (right-aligned, below badge)
+  // Confidence next to badge
   const confColor =
     data.confidence === "High"
       ? [22, 163, 74]
       : data.confidence === "Medium"
         ? [202, 138, 4]
         : [220, 38, 38];
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setTextColor(confColor[0], confColor[1], confColor[2]);
   doc.setFont("helvetica", "bold");
   doc.text(
     `${data.confidence} Confidence`,
-    pageWidth - margin,
-    y + 19,
-    { align: "right" }
+    badgeX + levelTextWidth + 20,
+    badgeY + 6.5
   );
 
   // ─── Divider ───
-  y = y + 30;
+  y = y + 36;
   doc.setDrawColor(230, 230, 230);
   doc.setLineWidth(0.3);
   doc.line(margin, y, pageWidth - margin, y);
