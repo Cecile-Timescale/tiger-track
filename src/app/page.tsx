@@ -16,6 +16,18 @@ export interface JobContext {
   levelingAnswers: Record<string, string>;
 }
 
+export interface LevelingResult {
+  recommendedLevel: string;
+  confidence: string;
+  reasoning: string;
+  dimensionScores: {
+    dimension: string;
+    suggestedLevel: string;
+    rationale: string;
+  }[];
+  questions: string[];
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("level");
   const [jobContext, setJobContext] = useState<JobContext>({
@@ -24,6 +36,7 @@ export default function Home() {
     jobDescription: "",
     levelingAnswers: {},
   });
+  const [levelingResult, setLevelingResult] = useState<LevelingResult | null>(null);
 
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
@@ -35,10 +48,17 @@ export default function Home() {
             <LevelRole
               jobContext={jobContext}
               onJobContextChange={setJobContext}
+              levelingResult={levelingResult}
+              onLevelingResult={setLevelingResult}
             />
           )}
           {activeTab === "lookup" && <ReverseLookup />}
-          {activeTab === "assistant" && <AIAssistant jobContext={jobContext} />}
+          {activeTab === "assistant" && (
+            <AIAssistant
+              jobContext={jobContext}
+              levelingResult={levelingResult}
+            />
+          )}
         </div>
       </main>
     </div>

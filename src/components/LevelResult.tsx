@@ -4,18 +4,7 @@ import { useState } from "react";
 import { LEVELS, getTrackLabel } from "@/lib/levelGuide";
 import { copyToClipboard, exportExecutiveSummaryPDF } from "@/lib/exportUtils";
 import ExportBar from "@/components/ExportBar";
-
-interface LevelingResult {
-  recommendedLevel: string;
-  confidence: string;
-  reasoning: string;
-  dimensionScores: {
-    dimension: string;
-    suggestedLevel: string;
-    rationale: string;
-  }[];
-  questions: string[];
-}
+import type { LevelingResult } from "@/app/page";
 
 interface LevelResultProps {
   result: LevelingResult;

@@ -146,6 +146,7 @@ interface ExecutiveSummaryData {
     suggestedLevel: string;
     rationale: string;
   }[];
+  aiInsights?: string;
 }
 
 export function exportExecutiveSummaryPDF(data: ExecutiveSummaryData) {
@@ -323,6 +324,45 @@ export function exportExecutiveSummaryPDF(data: ExecutiveSummaryData) {
     }
 
     y += rowHeight;
+  }
+
+  // ─── AI Assistant Insights (if available) ───
+  if (data.aiInsights && data.aiInsights.trim()) {
+    y += 8;
+    checkPageBreak(20);
+
+    // Section header
+    doc.setFontSize(11);
+    doc.setTextColor(26, 26, 26);
+    doc.setFont("helvetica", "bold");
+    doc.text("Additional AI Analysis", margin, y);
+    y += 3;
+
+    // Yellow accent line
+    doc.setDrawColor(245, 255, 128);
+    doc.setLineWidth(0.6);
+    doc.line(margin, y, margin + 40, y);
+    y += 6;
+
+    // Render AI insights text
+    doc.setFontSize(9);
+    doc.setTextColor(50, 50, 50);
+    doc.setFont("helvetica", "normal");
+
+    // Split into paragraphs and render each
+    const paragraphs = data.aiInsights.split(/\n\n+/);
+    for (const para of paragraphs) {
+      const cleanPara = para.replace(/#{1,3}\s*/g, "").trim();
+      if (!cleanPara) continue;
+
+      const lines = doc.splitTextToSize(cleanPara, contentWidth);
+      for (const line of lines) {
+        checkPageBreak(5);
+        doc.text(line, margin, y);
+        y += 4.2;
+      }
+      y += 3;
+    }
   }
 
   // ─── Footer on all pages ───

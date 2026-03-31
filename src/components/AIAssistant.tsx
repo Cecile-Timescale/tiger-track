@@ -1,8 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import type { JobContext } from "@/app/page";
-import { copyToClipboard, exportToPDF } from "@/lib/exportUtils";
+import type { JobContext, LevelingResult } from "@/app/page";
+import { LEVELS, getTrackLabel } from "@/lib/levelGuide";
+import {
+  copyToClipboard,
+  exportExecutiveSummaryPDF,
+  exportToPDF,
+} from "@/lib/exportUtils";
 import ExportBar from "@/components/ExportBar";
 
 interface Message {
@@ -12,9 +17,13 @@ interface Message {
 
 interface AIAssistantProps {
   jobContext: JobContext;
+  levelingResult: LevelingResult | null;
 }
 
-export default function AIAssistant({ jobContext }: AIAssistantProps) {
+export default function AIAssistant({
+  jobContext,
+  levelingResult,
+}: AIAssistantProps) {
   const hasContext =
     jobContext.jobTitle.trim() || jobContext.jobDescription.trim();
 
@@ -79,7 +88,6 @@ export default function AIAssistant({ jobContext }: AIAssistantProps) {
     setIsLoading(true);
 
     try {
-      // Prepend context to the first user message in the conversation
       const contextPrefix = buildContextPrefix();
       const messagesForApi = [
         ...messages.filter(
@@ -122,6 +130,76 @@ export default function AIAssistant({ jobContext }: AIAssistantProps) {
     }
   };
 
+  const handleExportPDF = () => {
+    // Strip markdown bold from AI messages
+    const cleanContent = (text: string) =>
+      text.replace(/\*\*(.*?)\*\*/g, "$1").replace(/#{1,3}\s*/g, "");
+
+    // Get AI conversation insights (skip welcome message)
+    const conversationMessages = messages.slice(1);
+    const aiResponses = conversationMessages
+      .filter((m) => m.role === "assistant")
+      .map((m) => cleanContent(m.content));
+
+    // If we have a leveling result, build a merged executive summary
+    if (levelingResult) {
+      const level = LEVELS.find(
+        (l) =>
+          l.code.toLowerCase() === levelingResult.recommendedLevel.toLowerCase()
+      );
+
+      // Build AI insights summary — combine the key points from conversation
+      const aiInsights = aiResponses.length > 0
+        ? aiResponses.join("\n\n")
+        : "";
+
+      exportExecutiveSummaryPDF({
+        jobTitle: jobContext.jobTitle || "Untitled Role",
+        recommendedLevel: levelingResult.recommendedLevel,
+        levelTitle: level?.title || "",
+        track: level ? getTrackLabel(level.track) : "N/A",
+        confidence: levelingResult.confidence,
+        reasoning: levelingResult.reasoning,
+        dimensionScores: levelingResult.dimensionScores,
+        aiInsights,
+      });
+    } else {
+      // No leveling result — export AI conversation as standalone exec summary
+      const sections: {
+        heading?: string;
+        subheading?: string;
+        body?: string;
+        spacerAfter?: number;
+      }[] = [];
+
+      // Build a summary from the conversation
+      if (aiResponses.length > 0) {
+        sections.push({
+          heading: "AI Assistant Analysis",
+          spacerAfter: 2,
+        });
+        conversationMessages.forEach((m) => {
+          sections.push({
+            subheading: m.role === "user" ? "Question" : "Analysis",
+            body: cleanContent(m.content),
+            spacerAfter: 4,
+          });
+        });
+      }
+
+      const title = jobContext.jobTitle
+        ? `Leveling Discussion: ${jobContext.jobTitle}`
+        : "AI Leveling Discussion";
+
+      exportToPDF(
+        title,
+        `${aiResponses.length} response${aiResponses.length !== 1 ? "s" : ""} • ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`,
+        sections,
+        `tiger-track-discussion-${Date.now()}.pdf`
+      );
+    }
+  };
+
   const suggestedQuestions = hasContext
     ? [
         `What level would ${jobContext.jobTitle || "this role"} be?`,
@@ -161,6 +239,14 @@ export default function AIAssistant({ jobContext }: AIAssistantProps) {
             Referencing{" "}
             <strong>{jobContext.jobTitle || "job description"}</strong> from the
             Level a Role tab
+            {levelingResult && (
+              <span className="ml-1 text-gray-500">
+                • Leveled at{" "}
+                <strong className="text-[#1A1A1A]">
+                  {levelingResult.recommendedLevel}
+                </strong>
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -242,31 +328,35 @@ export default function AIAssistant({ jobContext }: AIAssistantProps) {
         {/* Export bar - visible when there are user messages */}
         {messages.length > 1 && (
           <div className="px-4 pt-3 pb-1 flex items-center justify-between bg-gray-50/80">
-            <span className="text-xs text-gray-400">{messages.filter(m => m.role === "assistant").length - 1} response{messages.filter(m => m.role === "assistant").length - 1 !== 1 ? "s" : ""}</span>
+            <span className="text-xs text-gray-400">
+              {messages.filter((m) => m.role === "assistant").length - 1}{" "}
+              response
+              {messages.filter((m) => m.role === "assistant").length - 1 !== 1
+                ? "s"
+                : ""}
+              {levelingResult && (
+                <span className="ml-1 text-gray-500">
+                  • PDF will include Level a Role analysis
+                </span>
+              )}
+            </span>
             <ExportBar
               onCopy={() => {
-                const lastAssistant = [...messages].reverse().find(m => m.role === "assistant");
+                const lastAssistant = [...messages]
+                  .reverse()
+                  .find((m) => m.role === "assistant");
                 return copyToClipboard(lastAssistant?.content || "");
               }}
               onCopyAll={() => {
                 const text = messages
-                  .map(m => `${m.role === "user" ? "You" : "Tiger Track AI"}:\n${m.content}`)
+                  .map(
+                    (m) =>
+                      `${m.role === "user" ? "You" : "Tiger Track AI"}:\n${m.content}`
+                  )
                   .join("\n\n---\n\n");
                 return copyToClipboard(text);
               }}
-              onExportPDF={() => {
-                const sections = messages.map(m => ({
-                  subheading: m.role === "user" ? "You" : "Tiger Track AI",
-                  body: m.content.replace(/\*\*(.*?)\*\*/g, "$1"),
-                  spacerAfter: 4,
-                }));
-                exportToPDF(
-                  "AI Assistant Conversation",
-                  `${messages.length} messages • ${new Date().toLocaleDateString()}`,
-                  sections,
-                  `tiger-track-chat-${Date.now()}.pdf`
-                );
-              }}
+              onExportPDF={handleExportPDF}
               copyLabel="Copy Last"
               copyAllLabel="Copy All"
             />

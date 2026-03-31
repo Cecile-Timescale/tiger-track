@@ -2,23 +2,13 @@
 
 import { useState } from "react";
 import LevelResult from "@/components/LevelResult";
-import type { JobContext } from "@/app/page";
-
-interface LevelingResult {
-  recommendedLevel: string;
-  confidence: string;
-  reasoning: string;
-  dimensionScores: {
-    dimension: string;
-    suggestedLevel: string;
-    rationale: string;
-  }[];
-  questions: string[];
-}
+import type { JobContext, LevelingResult } from "@/app/page";
 
 interface LevelRoleProps {
   jobContext: JobContext;
   onJobContextChange: (ctx: JobContext) => void;
+  levelingResult: LevelingResult | null;
+  onLevelingResult: (result: LevelingResult | null) => void;
 }
 
 const LEVELING_QUESTIONS = [
@@ -57,10 +47,11 @@ const LEVELING_QUESTIONS = [
 export default function LevelRole({
   jobContext,
   onJobContextChange,
+  levelingResult: result,
+  onLevelingResult: setResult,
 }: LevelRoleProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
-  const [result, setResult] = useState<LevelingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showQuestions, setShowQuestions] = useState(false);
 
