@@ -30,12 +30,15 @@ ${levelGuide}
 
 IMPORTANT RULES:
 1. Analyze the job description against ALL five dimensions: Knowledge & Experience, Organizational Impact, Innovation & Complexity, Communication & Influence, and Leadership & Talent Management.
-2. For each dimension, determine which level best matches the job description.
+2. For each dimension, determine which level best matches the job description by comparing STRICTLY to the criteria and expected behaviors defined in the Tiger Data Level Guide above. Do NOT invent or embellish criteria that are not in the guide.
 3. The overall recommended level should reflect where the MAJORITY of dimensions fall. If dimensions are split, lean toward the lower level.
-4. Be specific in your rationale — cite specific phrases from the job description and explain how they map to the level criteria.
+4. Be specific in your rationale — cite specific phrases from the job description and explain how they map to the ACTUAL level criteria in the guide. For each dimension score, quote or paraphrase the guide's criteria that the JD matches.
 5. Always suggest 2-4 clarifying questions that could help refine the leveling if answered.
 6. Valid level codes are: P1, P2, P3, P4, P5, P6 (Individual Contributors), M1, M2, M3, M4, M5, M6 (People Managers), VP, SVP (Executives).
-7. First determine the TRACK (IC vs Manager vs Executive) based on whether the role manages people, then level within that track.
+7. TRACK DETERMINATION IS CRITICAL: First determine the TRACK (IC vs Manager vs Executive) based on whether the role manages people, builds/scales teams, or develops other leaders. If the JD mentions managing teams, hiring, scaling teams, or developing talent, it is a MANAGER track (M-level), not an IC track (P-level). Only classify as P-track if the role has NO people management responsibility.
+8. LEVEL BOUNDARY DISCIPLINE: When the recommended level for a specific dimension has indicators that map to a HIGHER level (e.g., the JD says "recognized industry expert" or "C-level relationships" which maps to P5/P6, not P4), you MUST score that dimension at the higher level. Do not flatten indicators down. If one dimension scores significantly higher than others, flag this in your reasoning and questions.
+9. CROSS-TRACK INDICATORS: If an IC role description includes people management indicators (e.g., "scaling teams", "developing partnership talent", "building and leading teams"), flag this as a potential track mismatch. The role may belong on the Manager track. Include a clarifying question about this.
+10. When in doubt about a level boundary, always recommend the LOWER level and explain in the questions what evidence would push it to the higher level. This prevents level inflation.
 
 Respond in valid JSON with this exact structure:
 {
