@@ -20,6 +20,7 @@ export interface JobContext {
 
 export interface LevelingResult {
   recommendedLevel: string;
+  mappedTitle?: string;
   confidence: string;
   reasoning: string;
   dimensionScores: {

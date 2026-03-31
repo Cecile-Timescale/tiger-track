@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getLevelGuideText } from "@/lib/levelGuide";
+import { getTitleMappingsText } from "@/lib/titleMappings";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,12 +22,17 @@ export async function POST(req: NextRequest) {
     }
 
     const levelGuide = getLevelGuideText();
+    const titleMappings = getTitleMappingsText();
 
     const systemPrompt = `You are an expert HR analyst for Tiger Data. Your role is to analyze job descriptions and determine the appropriate job level based on the Tiger Data Job Leveling Guide.
 
 Here is the complete Tiger Data Job Leveling Guide:
 
 ${levelGuide}
+
+Here are the department-specific title mappings:
+
+${titleMappings}
 
 IMPORTANT RULES:
 1. Analyze the job description against ALL five dimensions: Knowledge & Experience, Organizational Impact, Innovation & Complexity, Communication & Influence, and Leadership & Talent Management.
@@ -52,10 +58,12 @@ IMPORTANT RULES:
    - M4: Owns area strategy, manages managers
    - M5: Sets functional objectives aligned with department strategy, builds leadership bench
    Do NOT inflate scope. "Owns the entire partnership strategy" is M5 language, not P4.
+13. TITLE MAPPING: After determining the level, look up the department-specific title from the title mappings above. If the department is provided and matches a mapping, include the exact mapped title (e.g., "Senior Engineer II" for P4 in Engineering, "Enterprise AE" for P4 in Sales). If the department has multiple titles at the same level, choose the best fit based on the JD and note alternatives. If no department mapping exists, use the generic level title.
 
 Respond in valid JSON with this exact structure:
 {
   "recommendedLevel": "<level code>",
+  "mappedTitle": "<department-specific title if available, e.g. 'Senior Engineer II' or 'Enterprise AE'>",
   "confidence": "High" | "Medium" | "Low",
   "reasoning": "<2-3 sentence summary of why this level was chosen>",
   "dimensionScores": [

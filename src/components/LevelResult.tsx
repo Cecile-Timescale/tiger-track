@@ -57,7 +57,8 @@ export default function LevelResult({
     content += `${"=".repeat(50)}\n\n`;
     if (jobTitle) content += `Job Title: ${jobTitle}\n`;
     content += `Recommended Level: ${result.recommendedLevel}`;
-    if (level) content += ` - ${level.title}`;
+    if (result.mappedTitle) content += ` — ${result.mappedTitle}`;
+    else if (level) content += ` - ${level.title}`;
     content += `\n`;
     if (level) content += `Track: ${getTrackLabel(level.track)}\n`;
     content += `Confidence: ${result.confidence}\n\n`;
@@ -76,6 +77,7 @@ export default function LevelResult({
     exportExecutiveSummaryPDF({
       jobTitle: jobTitle || "Untitled Role",
       recommendedLevel: result.recommendedLevel,
+      mappedTitle: result.mappedTitle,
       levelTitle: level?.title || "",
       track: level ? getTrackLabel(level.track) : "N/A",
       confidence: result.confidence,
@@ -97,15 +99,25 @@ export default function LevelResult({
               <span className={`level-badge ${trackClass} text-xl px-4 py-1`}>
                 {result.recommendedLevel}
               </span>
-              {level && (
+              {result.mappedTitle ? (
+                <span className="text-gray-900 font-semibold text-lg">{result.mappedTitle}</span>
+              ) : level ? (
                 <span className="text-gray-600 font-medium">{level.title}</span>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              {level && (
+                <p className="text-sm text-gray-500">
+                  {getTrackLabel(level.track)}
+                </p>
+              )}
+              {result.mappedTitle && level && (
+                <span className="text-sm text-gray-400">·</span>
+              )}
+              {result.mappedTitle && level && (
+                <p className="text-sm text-gray-400">{level.title}</p>
               )}
             </div>
-            {level && (
-              <p className="text-sm text-gray-500 mt-1">
-                {getTrackLabel(level.track)}
-              </p>
-            )}
           </div>
           <span
             className={`text-xs font-medium px-2.5 py-1 rounded-full ${confidenceColor}`}

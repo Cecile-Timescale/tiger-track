@@ -137,6 +137,7 @@ export function exportToPDF(
 interface ExecutiveSummaryData {
   jobTitle: string;
   recommendedLevel: string;
+  mappedTitle?: string;
   levelTitle: string;
   track: string;
   confidence: string;
@@ -194,8 +195,9 @@ export function exportExecutiveSummaryPDF(data: ExecutiveSummaryData) {
   y = 50;
 
   // Yellow accent bar (full height of card)
+  const cardHeight = data.mappedTitle ? 38 : 30;
   doc.setFillColor(245, 255, 128);
-  doc.rect(margin, y, 3, 30, "F");
+  doc.rect(margin, y, 3, cardHeight, "F");
 
   // Role title
   doc.setFontSize(14);
@@ -203,19 +205,33 @@ export function exportExecutiveSummaryPDF(data: ExecutiveSummaryData) {
   doc.setFont("helvetica", "bold");
   doc.text(data.jobTitle, margin + 8, y + 7);
 
-  // Track label
-  doc.setFontSize(9);
-  doc.setTextColor(100, 100, 100);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.track, margin + 8, y + 14);
+  // Mapped title (department-specific) if available
+  if (data.mappedTitle) {
+    doc.setFontSize(11);
+    doc.setTextColor(26, 26, 26);
+    doc.setFont("helvetica", "bold");
+    doc.text(data.mappedTitle, margin + 8, y + 14);
 
-  // Level badge + confidence on the same line, below track
-  const levelText = `${data.recommendedLevel} — ${data.levelTitle}`;
+    // Generic level title as secondary
+    doc.setFontSize(8);
+    doc.setTextColor(130, 130, 130);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${data.track} · ${data.levelTitle}`, margin + 8, y + 19);
+  } else {
+    // Track label (no mapped title)
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont("helvetica", "normal");
+    doc.text(data.track, margin + 8, y + 14);
+  }
+
+  // Level badge + confidence on the same line, below track/mapped title
+  const levelText = `${data.recommendedLevel} — ${data.mappedTitle || data.levelTitle}`;
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   const levelTextWidth = doc.getTextWidth(levelText);
   const badgeX = margin + 8;
-  const badgeY = y + 19;
+  const badgeY = data.mappedTitle ? y + 24 : y + 19;
   doc.setFillColor(26, 26, 26);
   doc.roundedRect(badgeX, badgeY, levelTextWidth + 12, 9, 2, 2, "F");
   doc.setTextColor(245, 255, 128);
