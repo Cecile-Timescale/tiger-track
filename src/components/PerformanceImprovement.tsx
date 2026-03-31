@@ -46,11 +46,11 @@ const DIMENSION_NAMES = [
   "Leadership & Talent Management",
 ];
 
-const RATING_COLORS = {
+const RATING_COLORS: Record<string, string> = {
   Below: "bg-red-100 text-red-700 border-red-300",
   "At Level": "bg-green-100 text-green-700 border-green-300",
   Above: "bg-blue-100 text-blue-700 border-blue-300",
-  null: "bg-gray-100 text-gray-600 border-gray-300",
+  unrated: "bg-gray-100 text-gray-600 border-gray-300",
 };
 
 const RATING_BAR_COLORS = {
@@ -406,7 +406,7 @@ export default function PerformanceImprovement() {
                         {dim.name}
                       </label>
                       <div className="flex gap-2 mt-2">
-                        {(["Below", "At Level", "Above"] as RatingLevel[]).map(
+                        {(["Below", "At Level", "Above"] as const).map(
                           (rating) => (
                             <button
                               key={rating}
@@ -578,7 +578,7 @@ export default function PerformanceImprovement() {
                     <div>
                       <span className="text-gray-600">Current:</span>
                       <span className={`ml-1 font-medium ${
-                        RATING_COLORS[analysis.current as keyof typeof RATING_COLORS] || RATING_COLORS.null
+                        RATING_COLORS[analysis.current || "unrated"] || RATING_COLORS.unrated
                       }`}>
                         {analysis.current || "Not rated"}
                       </span>
