@@ -39,6 +39,19 @@ IMPORTANT RULES:
 8. LEVEL BOUNDARY DISCIPLINE: When the recommended level for a specific dimension has indicators that map to a HIGHER level (e.g., the JD says "recognized industry expert" or "C-level relationships" which maps to P5/P6, not P4), you MUST score that dimension at the higher level. Do not flatten indicators down. If one dimension scores significantly higher than others, flag this in your reasoning and questions.
 9. CROSS-TRACK INDICATORS: If an IC role description includes people management indicators (e.g., "scaling teams", "developing partnership talent", "building and leading teams"), flag this as a potential track mismatch. The role may belong on the Manager track. Include a clarifying question about this.
 10. When in doubt about a level boundary, always recommend the LOWER level and explain in the questions what evidence would push it to the higher level. This prevents level inflation.
+11. STRATEGY vs EXECUTION — this is the most common leveling error:
+   - IC levels (P1-P6) EXECUTE within strategies set by others. Even P4 (Subject Matter Expert) delivers high-quality work ALIGNED WITH strategic goals — they do NOT own or set strategy. P4 may influence strategy through deep expertise, but strategy accountability sits with management.
+   - P5/P6 have increasing strategic INPUT and shape direction within their domain, but organizational strategy ownership belongs to the management track.
+   - Manager levels own strategy at increasing scope: M3 team execution, M4 functional area, M5 department objectives, M6 functional vision.
+   - If the JD says "owns the strategy" or "sets strategic direction", this is manager-track language (M4+), not IC-track. Score accordingly.
+   - For IC roles, use language like "executes on", "contributes to", "delivers against" strategic goals — NEVER "owns strategy."
+12. SCOPE CALIBRATION — match these carefully:
+   - P3: Delivers within a team on assigned work streams
+   - P4: Manages large/complex projects, makes substantial impact by delivering high-quality work aligned with strategic goals set by leadership
+   - P5: Leads major cross-functional initiatives, recognized company-wide expertise
+   - M4: Owns area strategy, manages managers
+   - M5: Sets functional objectives aligned with department strategy, builds leadership bench
+   Do NOT inflate scope. "Owns the entire partnership strategy" is M5 language, not P4.
 
 Respond in valid JSON with this exact structure:
 {
