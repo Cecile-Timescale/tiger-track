@@ -69,7 +69,7 @@ export default function ReverseLookup() {
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 selectedTrack === track.id
-                  ? "bg-[#1a365d] text-white"
+                  ? "bg-[#1A1A1A] text-[#F5FF80]"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -83,10 +83,10 @@ export default function ReverseLookup() {
           {filteredLevels.map((level) => {
             const trackClass =
               level.track === "ic"
-                ? "border-blue-300 bg-blue-50 hover:bg-blue-100"
+                ? "border-[#F5FF80] bg-[#F5FF80]/15 hover:bg-[#F5FF80]/30"
                 : level.track === "manager"
-                  ? "border-gray-300 bg-gray-50 hover:bg-gray-100"
-                  : "border-yellow-300 bg-yellow-50 hover:bg-yellow-100";
+                  ? "border-[#2A2A2A]/30 bg-[#1A1A1A]/5 hover:bg-[#1A1A1A]/10"
+                  : "border-[#FF5B29]/40 bg-[#FF5B29]/10 hover:bg-[#FF5B29]/20";
             const isSelected = selectedLevel?.id === level.id;
 
             return (
@@ -95,7 +95,7 @@ export default function ReverseLookup() {
                 onClick={() => setSelectedLevel(level)}
                 className={`p-3 rounded-lg border-2 text-left transition-all ${
                   isSelected
-                    ? "border-[#1a365d] ring-2 ring-[#1a365d]/20 bg-white"
+                    ? "border-[#1A1A1A] ring-2 ring-[#F5FF80]/40 bg-white"
                     : trackClass
                 }`}
               >
@@ -137,7 +137,7 @@ export default function ReverseLookup() {
             </div>
             <button
               onClick={() => handleDownload(selectedLevel)}
-              className="text-sm text-[#1a365d] hover:text-[#2a4a7f] font-medium flex items-center gap-1 border border-[#1a365d] px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors whitespace-nowrap"
+              className="text-sm text-[#1A1A1A] hover:text-[#FF5B29] font-medium flex items-center gap-1 border border-[#1A1A1A] px-3 py-1.5 rounded-lg hover:bg-[#F5FF80]/20 transition-colors whitespace-nowrap"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

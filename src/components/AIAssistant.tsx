@@ -1,13 +1,21 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import type { JobContext } from "@/app/page";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
 }
 
-export default function AIAssistant() {
+interface AIAssistantProps {
+  jobContext: JobContext;
+}
+
+export default function AIAssistant({ jobContext }: AIAssistantProps) {
+  const hasContext =
+    jobContext.jobTitle.trim() || jobContext.jobDescription.trim();
+
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -17,6 +25,9 @@ export default function AIAssistant() {
         "• **Role analysis** — Describe a role and I'll help determine the right level\n" +
         "• **Requirements guidance** — Ask what's needed for a specific level (e.g., \"What does a P4 need to demonstrate?\")\n" +
         "• **Career progression** — Understand what it takes to move from one level to the next\n\n" +
+        (hasContext
+          ? `I can see you're working on a role${jobContext.jobTitle ? ` for **${jobContext.jobTitle}**` : ""}. Feel free to ask me about it!\n\n`
+          : "") +
         "How can I help you today?",
     },
   ]);
@@ -28,6 +39,35 @@ export default function AIAssistant() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const buildContextPrefix = () => {
+    if (!hasContext) return "";
+    let ctx = "\n\n[CONTEXT FROM LEVEL A ROLE TAB]\n";
+    if (jobContext.jobTitle) ctx += `Job Title: ${jobContext.jobTitle}\n`;
+    if (jobContext.department)
+      ctx += `Department: ${jobContext.department}\n`;
+    if (jobContext.jobDescription)
+      ctx += `Job Description:\n${jobContext.jobDescription}\n`;
+
+    const answers = Object.entries(jobContext.levelingAnswers).filter(
+      ([, v]) => v.trim()
+    );
+    if (answers.length > 0) {
+      ctx += "\nLeveling Guidance Answers:\n";
+      const labels: Record<string, string> = {
+        impact: "Business Impact",
+        complexity: "Ambiguity & Complexity",
+        influence: "Influence Required",
+        ownership: "Ownership & Autonomy",
+        leadership: "Leadership Responsibility",
+      };
+      for (const [key, value] of answers) {
+        ctx += `${labels[key] || key}: ${value}\n`;
+      }
+    }
+    ctx += "[END CONTEXT]\n\n";
+    return ctx;
+  };
+
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
@@ -37,15 +77,19 @@ export default function AIAssistant() {
     setIsLoading(true);
 
     try {
+      // Prepend context to the first user message in the conversation
+      const contextPrefix = buildContextPrefix();
+      const messagesForApi = [
+        ...messages.filter(
+          (m) => m.role !== "assistant" || messages.indexOf(m) > 0
+        ),
+        { role: "user", content: contextPrefix + userMessage },
+      ];
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [
-            ...messages.filter((m) => m.role !== "assistant" || messages.indexOf(m) > 0),
-            { role: "user", content: userMessage },
-          ],
-        }),
+        body: JSON.stringify({ messages: messagesForApi }),
       });
 
       if (!response.ok) throw new Error("Failed to get response");
@@ -76,15 +120,49 @@ export default function AIAssistant() {
     }
   };
 
-  const suggestedQuestions = [
-    "What distinguishes a P3 from a P4?",
-    "What does a M5 Director need to demonstrate?",
-    "How is VP different from Senior Director?",
-    "What level would a team lead with 5 years experience be?",
-  ];
+  const suggestedQuestions = hasContext
+    ? [
+        `What level would ${jobContext.jobTitle || "this role"} be?`,
+        "What's missing from this JD to determine the level?",
+        "How does this compare to one level higher?",
+        "What should I clarify with the hiring manager?",
+      ]
+    : [
+        "What distinguishes a P3 from a P4?",
+        "What does a M5 Director need to demonstrate?",
+        "How is VP different from Senior Director?",
+        "What level would a team lead with 5 years experience be?",
+      ];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col" style={{ height: "calc(100vh - 200px)", minHeight: "500px" }}>
+    <div
+      className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col"
+      style={{ height: "calc(100vh - 200px)", minHeight: "500px" }}
+    >
+      {/* Context banner */}
+      {hasContext && (
+        <div className="px-4 pt-3 pb-1">
+          <div className="flex items-center gap-2 text-xs bg-[#F5FF80]/30 text-[#1A1A1A] px-3 py-2 rounded-lg border border-[#F5FF80]/50">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
+            Referencing{" "}
+            <strong>{jobContext.jobTitle || "job description"}</strong> from the
+            Level a Role tab
+          </div>
+        </div>
+      )}
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, i) => (
@@ -95,7 +173,7 @@ export default function AIAssistant() {
             <div
               className={`max-w-[80%] rounded-xl px-4 py-3 text-sm ${
                 msg.role === "user"
-                  ? "bg-[#1a365d] text-white"
+                  ? "bg-[#1A1A1A] text-white"
                   : "bg-gray-100 text-gray-800"
               }`}
             >
@@ -118,9 +196,18 @@ export default function AIAssistant() {
           <div className="chat-message flex justify-start">
             <div className="bg-gray-100 rounded-xl px-4 py-3 text-sm text-gray-500">
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                <div
+                  className="w-2 h-2 bg-[#FF5B29] rounded-full animate-bounce"
+                  style={{ animationDelay: "0ms" }}
+                />
+                <div
+                  className="w-2 h-2 bg-[#FF5B29] rounded-full animate-bounce"
+                  style={{ animationDelay: "150ms" }}
+                />
+                <div
+                  className="w-2 h-2 bg-[#FF5B29] rounded-full animate-bounce"
+                  style={{ animationDelay: "300ms" }}
+                />
               </div>
             </div>
           </div>
@@ -139,7 +226,7 @@ export default function AIAssistant() {
                 onClick={() => {
                   setInput(q);
                 }}
-                className="text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors"
+                className="text-xs bg-[#F5FF80]/30 text-[#1A1A1A] px-3 py-1.5 rounded-full hover:bg-[#F5FF80]/60 transition-colors border border-[#F5FF80]/50"
               >
                 {q}
               </button>
@@ -157,12 +244,12 @@ export default function AIAssistant() {
             onKeyDown={handleKeyDown}
             placeholder="Ask about job leveling..."
             rows={1}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80] focus:border-[#1A1A1A] outline-none resize-none"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="bg-[#1a365d] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#2a4a7f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[#1A1A1A] text-[#F5FF80] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#2A2A2A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send
           </button>

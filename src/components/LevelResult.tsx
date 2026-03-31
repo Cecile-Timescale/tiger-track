@@ -95,7 +95,7 @@ export default function LevelResult({ result, jobTitle }: LevelResultProps) {
             </span>
             <button
               onClick={handleDownload}
-              className="text-sm text-[#1a365d] hover:text-[#2a4a7f] font-medium flex items-center gap-1 border border-[#1a365d] px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+              className="text-sm text-[#1A1A1A] hover:text-[#FF5B29] font-medium flex items-center gap-1 border border-[#1A1A1A] px-3 py-1.5 rounded-lg hover:bg-[#F5FF80]/20 transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -152,17 +152,17 @@ export default function LevelResult({ result, jobTitle }: LevelResultProps) {
 
       {/* Clarifying Questions */}
       {result.questions.length > 0 && (
-        <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
-          <h3 className="text-sm font-semibold text-blue-900 mb-2">
+        <div className="bg-[#F5FF80]/20 rounded-xl border border-[#F5FF80]/50 p-6">
+          <h3 className="text-sm font-semibold text-[#1A1A1A] mb-2">
             Questions to Refine the Leveling
           </h3>
-          <p className="text-xs text-blue-700 mb-3">
+          <p className="text-xs text-gray-600 mb-3">
             Answering these questions could help refine the level recommendation:
           </p>
           <ul className="space-y-2">
             {result.questions.map((q, i) => (
-              <li key={i} className="text-sm text-blue-800 flex gap-2">
-                <span className="text-blue-400 font-mono text-xs mt-0.5">
+              <li key={i} className="text-sm text-gray-800 flex gap-2">
+                <span className="text-[#FF5B29] font-mono text-xs mt-0.5">
                   {i + 1}.
                 </span>
                 {q}

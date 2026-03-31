@@ -9,18 +9,36 @@ import AIAssistant from "@/components/AIAssistant";
 
 type Tab = "level" | "lookup" | "assistant";
 
+export interface JobContext {
+  jobTitle: string;
+  department: string;
+  jobDescription: string;
+  levelingAnswers: Record<string, string>;
+}
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState<Tab>("level");
+  const [jobContext, setJobContext] = useState<JobContext>({
+    jobTitle: "",
+    department: "",
+    jobDescription: "",
+    levelingAnswers: {},
+  });
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <div className="min-h-screen bg-[#fafaf8]">
       <Header />
       <main className="max-w-6xl mx-auto px-4 py-6">
         <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
         <div className="mt-6">
-          {activeTab === "level" && <LevelRole />}
+          {activeTab === "level" && (
+            <LevelRole
+              jobContext={jobContext}
+              onJobContextChange={setJobContext}
+            />
+          )}
           {activeTab === "lookup" && <ReverseLookup />}
-          {activeTab === "assistant" && <AIAssistant />}
+          {activeTab === "assistant" && <AIAssistant jobContext={jobContext} />}
         </div>
       </main>
     </div>
