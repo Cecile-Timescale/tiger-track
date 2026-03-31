@@ -5,9 +5,11 @@ import Header from "@/components/Header";
 import TabNav from "@/components/TabNav";
 import LevelRole from "@/components/LevelRole";
 import ReverseLookup from "@/components/ReverseLookup";
+import BarRaiser from "@/components/BarRaiser";
+import PerformanceImprovement from "@/components/PerformanceImprovement";
 import AIAssistant from "@/components/AIAssistant";
 
-type Tab = "level" | "lookup" | "assistant";
+type Tab = "level" | "lookup" | "bar-raiser" | "performance" | "assistant";
 
 export interface JobContext {
   jobTitle: string;
@@ -36,7 +38,9 @@ export default function Home() {
     jobDescription: "",
     levelingAnswers: {},
   });
-  const [levelingResult, setLevelingResult] = useState<LevelingResult | null>(null);
+  const [levelingResult, setLevelingResult] = useState<LevelingResult | null>(
+    null
+  );
 
   return (
     <div className="min-h-screen bg-[#f5f5f5]">
@@ -53,6 +57,8 @@ export default function Home() {
             />
           )}
           {activeTab === "lookup" && <ReverseLookup />}
+          {activeTab === "bar-raiser" && <BarRaiser />}
+          {activeTab === "performance" && <PerformanceImprovement />}
           {activeTab === "assistant" && (
             <AIAssistant
               jobContext={jobContext}

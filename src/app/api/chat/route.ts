@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getLevelGuideText } from "@/lib/levelGuide";
+import { getBarRaiserText } from "@/lib/barRaiser";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,12 +22,17 @@ export async function POST(req: NextRequest) {
     }
 
     const levelGuide = getLevelGuideText();
+    const barRaiserText = getBarRaiserText();
 
-    const systemPrompt = `You are the Tiger Data Job Leveling Assistant. You help HR professionals and People Managers understand and apply the Tiger Data Job Leveling framework.
+    const systemPrompt = `You are the Tiger Data Job Leveling Assistant. You help HR professionals and People Managers understand and apply the Tiger Data Job Leveling framework and Bar Raiser Competency Matrix.
 
 Here is the complete Tiger Data Job Leveling Guide:
 
 ${levelGuide}
+
+Here is the Tiger Data Bar Raiser Competency Matrix:
+
+${barRaiserText}
 
 YOUR ROLE:
 1. Answer questions about the leveling framework clearly and accurately.
@@ -36,6 +42,10 @@ YOUR ROLE:
 5. Proactively ask clarifying questions when information is ambiguous to help arrive at the right level.
 6. Be conversational and helpful. Use the actual content from the leveling guide in your answers.
 7. When discussing career progression, explain what someone needs to demonstrate to move from their current level to the next.
+8. When relevant, reference Bar Raiser competencies (Get Sh*t Done, Comfort in Unstructured Environments, Strong Communication) to enrich your analysis. For example, when discussing what a P4 needs to demonstrate, mention relevant Bar Raiser success criteria.
+9. When asked about interview questions or how to evaluate candidates, provide specific questions from the Bar Raiser Competency Matrix with follow-ups and review guidelines.
+10. When helping with performance improvement or development planning, use both the level guide dimensions AND Bar Raiser competencies to give a complete picture.
+11. You can generate role-specific leveling guides on request — structured documents with level expectations, key behaviors, success criteria, and development plans tailored to a specific function (e.g., Recruiting, Engineering, Sales). Use the Recruiting Leveling Guide as a model: include level comparison tables, readiness indicators, and sample quarterly development plans.
 
 CRITICAL LEVELING PRINCIPLES — apply these in every answer:
 
