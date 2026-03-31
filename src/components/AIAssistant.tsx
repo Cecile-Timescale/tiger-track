@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import type { JobContext } from "@/app/page";
+import { copyToClipboard, exportToPDF } from "@/lib/exportUtils";
+import ExportBar from "@/components/ExportBar";
 
 interface Message {
   role: "user" | "assistant";
@@ -232,6 +234,39 @@ export default function AIAssistant({ jobContext }: AIAssistantProps) {
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Export bar - visible when there are user messages */}
+      {messages.length > 1 && (
+        <div className="px-4 pb-2 pt-1 border-t border-gray-100">
+          <ExportBar
+            onCopy={() => {
+              const lastAssistant = [...messages].reverse().find(m => m.role === "assistant");
+              return copyToClipboard(lastAssistant?.content || "");
+            }}
+            onCopyAll={() => {
+              const text = messages
+                .map(m => `${m.role === "user" ? "You" : "Tiger Track AI"}:\n${m.content}`)
+                .join("\n\n---\n\n");
+              return copyToClipboard(text);
+            }}
+            onExportPDF={() => {
+              const sections = messages.map(m => ({
+                subheading: m.role === "user" ? "You" : "Tiger Track AI",
+                body: m.content.replace(/\*\*(.*?)\*\*/g, "$1"),
+                spacerAfter: 4,
+              }));
+              exportToPDF(
+                "AI Assistant Conversation",
+                `${messages.length} messages • ${new Date().toLocaleDateString()}`,
+                sections,
+                `tiger-track-chat-${Date.now()}.pdf`
+              );
+            }}
+            copyLabel="Copy Last"
+            copyAllLabel="Copy All"
+          />
         </div>
       )}
 

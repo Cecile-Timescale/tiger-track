@@ -1,6 +1,8 @@
 "use client";
 
 import { LEVELS, DIMENSION_LABELS, getTrackLabel } from "@/lib/levelGuide";
+import { copyToClipboard, exportToPDF } from "@/lib/exportUtils";
+import ExportBar from "@/components/ExportBar";
 
 interface LevelingResult {
   recommendedLevel: string;
@@ -33,7 +35,7 @@ export default function LevelResult({ result, jobTitle }: LevelResultProps) {
         ? "text-yellow-700 bg-yellow-50"
         : "text-red-700 bg-red-50";
 
-  const handleDownload = () => {
+  const buildPlainText = () => {
     let content = `TIGER DATA - JOB LEVELING ANALYSIS\n`;
     content += `${"=".repeat(50)}\n\n`;
     if (jobTitle) content += `Job Title: ${jobTitle}\n`;
@@ -54,14 +56,41 @@ export default function LevelResult({ result, jobTitle }: LevelResultProps) {
         content += `${i + 1}. ${q}\n`;
       });
     }
+    return content;
+  };
 
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `leveling-analysis-${result.recommendedLevel}${jobTitle ? `-${jobTitle.replace(/\s+/g, "-").toLowerCase()}` : ""}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleCopy = () => copyToClipboard(buildPlainText());
+
+  const handleExportPDF = () => {
+    const sections: { heading?: string; subheading?: string; body?: string; spacerAfter?: number }[] = [
+      {
+        heading: `Recommended Level: ${result.recommendedLevel}${level ? ` — ${level.title}` : ""}`,
+        body: `Track: ${level ? getTrackLabel(level.track) : "N/A"}  |  Confidence: ${result.confidence}`,
+        spacerAfter: 2,
+      },
+      { subheading: "Analysis Summary", body: result.reasoning, spacerAfter: 4 },
+      { heading: "Dimension Breakdown" },
+      ...result.dimensionScores.map((score) => ({
+        subheading: `${score.dimension}  →  ${score.suggestedLevel}`,
+        body: score.rationale,
+        spacerAfter: 2,
+      })),
+    ];
+    if (result.questions.length > 0) {
+      sections.push({ heading: "Clarifying Questions" });
+      result.questions.forEach((q, i) => {
+        sections.push({ body: `${i + 1}. ${q}`, spacerAfter: 1 });
+      });
+    }
+    const slug = jobTitle
+      ? jobTitle.replace(/\s+/g, "-").toLowerCase()
+      : result.recommendedLevel;
+    exportToPDF(
+      `Job Leveling Analysis${jobTitle ? `: ${jobTitle}` : ""}`,
+      `Level ${result.recommendedLevel} • ${result.confidence} Confidence`,
+      sections,
+      `tiger-track-analysis-${slug}.pdf`
+    );
   };
 
   return (
@@ -87,35 +116,14 @@ export default function LevelResult({ result, jobTitle }: LevelResultProps) {
               </p>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <span
-              className={`text-xs font-medium px-2.5 py-1 rounded-full ${confidenceColor}`}
-            >
-              {result.confidence} Confidence
-            </span>
-            <button
-              onClick={handleDownload}
-              className="text-sm text-[#1A1A1A] hover:text-[#FF5B29] font-medium flex items-center gap-1 border border-[#1A1A1A] px-3 py-1.5 rounded-lg hover:bg-[#F5FF80]/20 transition-colors"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Download
-            </button>
-          </div>
+          <span
+            className={`text-xs font-medium px-2.5 py-1 rounded-full ${confidenceColor}`}
+          >
+            {result.confidence} Confidence
+          </span>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4">
+        <div className="bg-gray-50 rounded-lg p-4 mb-4">
           <h4 className="text-sm font-medium text-gray-700 mb-1">
             Analysis Summary
           </h4>
@@ -123,6 +131,12 @@ export default function LevelResult({ result, jobTitle }: LevelResultProps) {
             {result.reasoning}
           </p>
         </div>
+
+        <ExportBar
+          onCopy={handleCopy}
+          onExportPDF={handleExportPDF}
+          copyLabel="Copy Result"
+        />
       </div>
 
       {/* Dimension Scores */}

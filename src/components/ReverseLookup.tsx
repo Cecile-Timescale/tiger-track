@@ -8,6 +8,8 @@ import {
   type Level,
   type TrackType,
 } from "@/lib/levelGuide";
+import { copyToClipboard, exportToPDF } from "@/lib/exportUtils";
+import ExportBar from "@/components/ExportBar";
 
 export default function ReverseLookup() {
   const [selectedTrack, setSelectedTrack] = useState<TrackType | "all">("all");
@@ -18,7 +20,7 @@ export default function ReverseLookup() {
       ? LEVELS
       : LEVELS.filter((l) => l.track === selectedTrack);
 
-  const handleDownload = (level: Level) => {
+  const buildLevelText = (level: Level) => {
     let content = `TIGER DATA - LEVEL REQUIREMENTS\n`;
     content += `${"=".repeat(50)}\n\n`;
     content += `Level: ${level.code} - ${level.title}\n`;
@@ -31,14 +33,32 @@ export default function ReverseLookup() {
       content += `Criteria:\n${dim.criteria}\n\n`;
       content += `Expected Behaviors:\n${dim.expectedBehaviors}\n\n`;
     }
+    return content;
+  };
 
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `tiger-data-level-${level.code}-requirements.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleCopy = (level: Level) => copyToClipboard(buildLevelText(level));
+
+  const handleCopyAll = () => {
+    const allText = filteredLevels.map(buildLevelText).join("\n\n");
+    return copyToClipboard(allText);
+  };
+
+  const handleExportPDF = (level: Level) => {
+    const sections: { heading?: string; subheading?: string; body?: string; spacerAfter?: number }[] = [
+      { body: level.description, spacerAfter: 4 },
+    ];
+    for (const [key, label] of Object.entries(DIMENSION_LABELS)) {
+      const dim = level.dimensions[key as keyof typeof level.dimensions];
+      sections.push({ heading: label });
+      sections.push({ subheading: "Criteria", body: dim.criteria, spacerAfter: 2 });
+      sections.push({ subheading: "Expected Behaviors", body: dim.expectedBehaviors, spacerAfter: 4 });
+    }
+    exportToPDF(
+      `${level.code} — ${level.title}`,
+      `${getTrackLabel(level.track)} • Tiger Data Level Guide`,
+      sections,
+      `tiger-track-${level.code}-requirements.pdf`
+    );
   };
 
   return (
@@ -49,7 +69,7 @@ export default function ReverseLookup() {
         </h2>
         <p className="text-sm text-gray-500 mb-5">
           Select a level to view its full requirements across all dimensions.
-          Download the requirements to share with managers or include in job
+          Export or copy the requirements to share with managers or include in job
           postings.
         </p>
 
@@ -114,7 +134,7 @@ export default function ReverseLookup() {
       {/* Level Detail */}
       {selectedLevel && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-start justify-between mb-5">
+          <div className="flex items-start justify-between mb-4">
             <div>
               <div className="flex items-center gap-3">
                 <span
@@ -135,25 +155,16 @@ export default function ReverseLookup() {
                 {selectedLevel.description}
               </p>
             </div>
-            <button
-              onClick={() => handleDownload(selectedLevel)}
-              className="text-sm text-[#1A1A1A] hover:text-[#FF5B29] font-medium flex items-center gap-1 border border-[#1A1A1A] px-3 py-1.5 rounded-lg hover:bg-[#F5FF80]/20 transition-colors whitespace-nowrap"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Download Requirements
-            </button>
+          </div>
+
+          <div className="mb-5">
+            <ExportBar
+              onCopy={() => handleCopy(selectedLevel)}
+              onCopyAll={handleCopyAll}
+              onExportPDF={() => handleExportPDF(selectedLevel)}
+              copyLabel="Copy Level"
+              copyAllLabel={`Copy All ${selectedTrack === "all" ? "Levels" : getTrackLabel(selectedTrack === "ic" ? "ic" : selectedTrack === "manager" ? "manager" : "executive")}`}
+            />
           </div>
 
           <div className="space-y-4">
