@@ -26,7 +26,7 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-[#fafaf8]">
+    <div className="min-h-screen bg-[#f5f5f5]">
       <Header />
       <main className="max-w-6xl mx-auto px-4 py-6">
         <TabNav activeTab={activeTab} onTabChange={setActiveTab} />
