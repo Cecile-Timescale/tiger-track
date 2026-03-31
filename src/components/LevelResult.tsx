@@ -94,7 +94,7 @@ export default function LevelResult({ result, jobTitle }: LevelResultProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-16">
       {/* Main Result Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-start justify-between mb-4">
@@ -123,7 +123,7 @@ export default function LevelResult({ result, jobTitle }: LevelResultProps) {
           </span>
         </div>
 
-        <div className="bg-gray-50 rounded-lg p-4 mb-4">
+        <div className="bg-gray-50 rounded-lg p-4">
           <h4 className="text-sm font-medium text-gray-700 mb-1">
             Analysis Summary
           </h4>
@@ -131,12 +131,6 @@ export default function LevelResult({ result, jobTitle }: LevelResultProps) {
             {result.reasoning}
           </p>
         </div>
-
-        <ExportBar
-          onCopy={handleCopy}
-          onExportPDF={handleExportPDF}
-          copyLabel="Copy Result"
-        />
       </div>
 
       {/* Dimension Scores */}
@@ -185,6 +179,20 @@ export default function LevelResult({ result, jobTitle }: LevelResultProps) {
           </ul>
         </div>
       )}
+
+      {/* Sticky Export Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] px-6 py-3 z-50">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <span className="text-xs text-gray-500 font-medium">
+            Level: <span className="text-gray-900">{result.recommendedLevel}{level ? ` — ${level.title}` : ""}</span>
+          </span>
+          <ExportBar
+            onCopy={handleCopy}
+            onExportPDF={handleExportPDF}
+            copyLabel="Copy Result"
+          />
+        </div>
+      </div>
     </div>
   );
 }

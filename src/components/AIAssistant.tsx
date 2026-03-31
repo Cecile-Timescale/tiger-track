@@ -237,57 +237,59 @@ export default function AIAssistant({ jobContext }: AIAssistantProps) {
         </div>
       )}
 
-      {/* Export bar - visible when there are user messages */}
-      {messages.length > 1 && (
-        <div className="px-4 pb-2 pt-1 border-t border-gray-100">
-          <ExportBar
-            onCopy={() => {
-              const lastAssistant = [...messages].reverse().find(m => m.role === "assistant");
-              return copyToClipboard(lastAssistant?.content || "");
-            }}
-            onCopyAll={() => {
-              const text = messages
-                .map(m => `${m.role === "user" ? "You" : "Tiger Track AI"}:\n${m.content}`)
-                .join("\n\n---\n\n");
-              return copyToClipboard(text);
-            }}
-            onExportPDF={() => {
-              const sections = messages.map(m => ({
-                subheading: m.role === "user" ? "You" : "Tiger Track AI",
-                body: m.content.replace(/\*\*(.*?)\*\*/g, "$1"),
-                spacerAfter: 4,
-              }));
-              exportToPDF(
-                "AI Assistant Conversation",
-                `${messages.length} messages • ${new Date().toLocaleDateString()}`,
-                sections,
-                `tiger-track-chat-${Date.now()}.pdf`
-              );
-            }}
-            copyLabel="Copy Last"
-            copyAllLabel="Copy All"
-          />
-        </div>
-      )}
-
-      {/* Input */}
-      <div className="border-t border-gray-200 p-4">
-        <div className="flex gap-2">
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask about job leveling..."
-            rows={1}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80] focus:border-[#1A1A1A] outline-none resize-none"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-            className="bg-[#1A1A1A] text-[#F5FF80] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#2A2A2A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Send
-          </button>
+      {/* Input area with export bar */}
+      <div className="border-t border-gray-200">
+        {/* Export bar - visible when there are user messages */}
+        {messages.length > 1 && (
+          <div className="px-4 pt-3 pb-1 flex items-center justify-between bg-gray-50/80">
+            <span className="text-xs text-gray-400">{messages.filter(m => m.role === "assistant").length - 1} response{messages.filter(m => m.role === "assistant").length - 1 !== 1 ? "s" : ""}</span>
+            <ExportBar
+              onCopy={() => {
+                const lastAssistant = [...messages].reverse().find(m => m.role === "assistant");
+                return copyToClipboard(lastAssistant?.content || "");
+              }}
+              onCopyAll={() => {
+                const text = messages
+                  .map(m => `${m.role === "user" ? "You" : "Tiger Track AI"}:\n${m.content}`)
+                  .join("\n\n---\n\n");
+                return copyToClipboard(text);
+              }}
+              onExportPDF={() => {
+                const sections = messages.map(m => ({
+                  subheading: m.role === "user" ? "You" : "Tiger Track AI",
+                  body: m.content.replace(/\*\*(.*?)\*\*/g, "$1"),
+                  spacerAfter: 4,
+                }));
+                exportToPDF(
+                  "AI Assistant Conversation",
+                  `${messages.length} messages • ${new Date().toLocaleDateString()}`,
+                  sections,
+                  `tiger-track-chat-${Date.now()}.pdf`
+                );
+              }}
+              copyLabel="Copy Last"
+              copyAllLabel="Copy All"
+            />
+          </div>
+        )}
+        <div className="p-4 pt-2">
+          <div className="flex gap-2">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask about job leveling..."
+              rows={1}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80] focus:border-[#1A1A1A] outline-none resize-none"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isLoading}
+              className="bg-[#1A1A1A] text-[#F5FF80] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#2A2A2A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>
