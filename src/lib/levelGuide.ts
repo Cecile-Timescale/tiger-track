@@ -427,8 +427,8 @@ export const LEVELS: Level[] = [
         expectedBehaviors: "Builds high-level relationships across the company and industry. Models a company-first mindset and identifies company-wide needs and priorities. Trusted strategic partner to the CEO. Regularly presents to the Board. Represents the company externally.",
       },
       leadershipTalentMgmt: {
-        criteria: "Oversees departmental performance and develops Directors/Sr. Directors. Establishes succession for long-term company strategy. Defines high-performance culture and exemplifies company values through actions. Leads organization-level change aligned to company success.",
-        expectedBehaviors: "Oversees departmental performance and develops Directors/Sr. Directors. Establishes succession for long-term strategy. Defines high-performance culture and exemplifies company values. Leads organization-level change aligned to company success.",
+        criteria: "Oversees departmental performance and develops Directors/Sr. Directors. Establishes succession planning for long-term company strategy. Defines high-performance culture and exemplifies company values through actions. Leads organization-level change aligned to company success.",
+        expectedBehaviors: "Actively coaches and sponsors Directors/Sr. Directors for growth into executive roles. Builds a robust succession pipeline across the department. Drives cultural transformation by visibly modeling company values and holding leaders accountable. Champions and steers large-scale organizational change initiatives that directly support company-wide strategic objectives.",
       },
     },
   },
