@@ -131,3 +131,223 @@ export function exportToPDF(
 
   doc.save(filename);
 }
+
+// ── Executive Summary PDF ──
+
+interface ExecutiveSummaryData {
+  jobTitle: string;
+  recommendedLevel: string;
+  levelTitle: string;
+  track: string;
+  confidence: string;
+  reasoning: string;
+  dimensionScores: {
+    dimension: string;
+    suggestedLevel: string;
+    rationale: string;
+  }[];
+}
+
+export function exportExecutiveSummaryPDF(data: ExecutiveSummaryData) {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
+  let y = 0;
+
+  const checkPageBreak = (needed: number) => {
+    if (y + needed > pageHeight - 20) {
+      doc.addPage();
+      y = margin;
+    }
+  };
+
+  // ─── Dark header band ───
+  doc.setFillColor(26, 26, 26);
+  doc.rect(0, 0, pageWidth, 40, "F");
+
+  // Tiger Track logo text
+  doc.setFontSize(10);
+  doc.setTextColor(245, 255, 128);
+  doc.setFont("helvetica", "bold");
+  doc.text("TIGER TRACK", margin, 14);
+
+  // Document title
+  doc.setFontSize(18);
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.text("Job Leveling Executive Summary", margin, 28);
+
+  // Subtitle with date
+  doc.setFontSize(8);
+  doc.setTextColor(180, 180, 180);
+  doc.setFont("helvetica", "normal");
+  doc.text(
+    `Prepared ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`,
+    margin,
+    35
+  );
+
+  // ─── Role info card ───
+  y = 50;
+
+  // Yellow accent bar
+  doc.setFillColor(245, 255, 128);
+  doc.rect(margin, y, 3, 24, "F");
+
+  // Role title
+  doc.setFontSize(14);
+  doc.setTextColor(26, 26, 26);
+  doc.setFont("helvetica", "bold");
+  doc.text(data.jobTitle, margin + 8, y + 7);
+
+  // Track
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont("helvetica", "normal");
+  doc.text(data.track, margin + 8, y + 14);
+
+  // Level badge (right-aligned)
+  const levelText = `${data.recommendedLevel} — ${data.levelTitle}`;
+  const levelTextWidth = doc.getTextWidth(levelText);
+  const badgeX = pageWidth - margin - levelTextWidth - 12;
+  const badgeY = y + 1;
+  doc.setFillColor(26, 26, 26);
+  doc.roundedRect(badgeX, badgeY, levelTextWidth + 12, 10, 2, 2, "F");
+  doc.setFontSize(10);
+  doc.setTextColor(245, 255, 128);
+  doc.setFont("helvetica", "bold");
+  doc.text(levelText, badgeX + 6, badgeY + 7);
+
+  // Confidence (right-aligned, below badge)
+  const confColor =
+    data.confidence === "High"
+      ? [22, 163, 74]
+      : data.confidence === "Medium"
+        ? [202, 138, 4]
+        : [220, 38, 38];
+  doc.setFontSize(8);
+  doc.setTextColor(confColor[0], confColor[1], confColor[2]);
+  doc.setFont("helvetica", "bold");
+  doc.text(
+    `${data.confidence} Confidence`,
+    pageWidth - margin,
+    y + 19,
+    { align: "right" }
+  );
+
+  // ─── Divider ───
+  y = y + 30;
+  doc.setDrawColor(230, 230, 230);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 8;
+
+  // ─── Summary section ───
+  doc.setFontSize(11);
+  doc.setTextColor(26, 26, 26);
+  doc.setFont("helvetica", "bold");
+  doc.text("Summary", margin, y);
+  y += 6;
+
+  doc.setFontSize(9.5);
+  doc.setTextColor(50, 50, 50);
+  doc.setFont("helvetica", "normal");
+  const reasoningLines = doc.splitTextToSize(data.reasoning, contentWidth);
+  for (const line of reasoningLines) {
+    checkPageBreak(5);
+    doc.text(line, margin, y);
+    y += 4.5;
+  }
+  y += 6;
+
+  // ─── Dimension Assessment ───
+  checkPageBreak(20);
+  doc.setFontSize(11);
+  doc.setTextColor(26, 26, 26);
+  doc.setFont("helvetica", "bold");
+  doc.text("Dimension Assessment", margin, y);
+  y += 8;
+
+  // Table header
+  doc.setFillColor(245, 245, 245);
+  doc.rect(margin, y - 4, contentWidth, 8, "F");
+  doc.setFontSize(8);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont("helvetica", "bold");
+  doc.text("Dimension", margin + 3, y);
+  doc.text("Level", margin + 70, y);
+  doc.text("Assessment", margin + 88, y);
+  y += 7;
+
+  // Table rows
+  for (const score of data.dimensionScores) {
+    // Estimate row height
+    const rationaleLines = doc.splitTextToSize(
+      score.rationale,
+      contentWidth - 88
+    );
+    const rowHeight = Math.max(rationaleLines.length * 4.2 + 4, 10);
+
+    checkPageBreak(rowHeight + 2);
+
+    // Light row separator
+    doc.setDrawColor(240, 240, 240);
+    doc.setLineWidth(0.2);
+    doc.line(margin, y - 2, pageWidth - margin, y - 2);
+
+    // Dimension name
+    doc.setFontSize(8.5);
+    doc.setTextColor(26, 26, 26);
+    doc.setFont("helvetica", "bold");
+    doc.text(score.dimension, margin + 3, y + 2);
+
+    // Level pill
+    doc.setFillColor(26, 26, 26);
+    const pillWidth = doc.getTextWidth(score.suggestedLevel) + 6;
+    doc.roundedRect(margin + 69, y - 1.5, pillWidth, 6, 1.5, 1.5, "F");
+    doc.setFontSize(7);
+    doc.setTextColor(245, 255, 128);
+    doc.setFont("helvetica", "bold");
+    doc.text(score.suggestedLevel, margin + 72, y + 2.5);
+
+    // Rationale
+    doc.setFontSize(8);
+    doc.setTextColor(80, 80, 80);
+    doc.setFont("helvetica", "normal");
+    let rationaleY = y + 2;
+    for (const line of rationaleLines) {
+      doc.text(line, margin + 88, rationaleY);
+      rationaleY += 4.2;
+    }
+
+    y += rowHeight;
+  }
+
+  // ─── Footer on all pages ───
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+
+    // Footer line
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.3);
+    doc.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
+
+    // Footer text
+    doc.setFontSize(7);
+    doc.setTextColor(160, 160, 160);
+    doc.setFont("helvetica", "normal");
+    doc.text("Tiger Track | Tiger Data", margin, pageHeight - 9);
+    doc.text("Confidential", pageWidth / 2, pageHeight - 9, {
+      align: "center",
+    });
+    doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 9, {
+      align: "right",
+    });
+  }
+
+  const slug = data.jobTitle.replace(/\s+/g, "-").toLowerCase();
+  doc.save(`tiger-track-summary-${slug}.pdf`);
+}

@@ -59,6 +59,7 @@ export default function LevelRole({
   onJobContextChange,
 }: LevelRoleProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isRefining, setIsRefining] = useState(false);
   const [result, setResult] = useState<LevelingResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showQuestions, setShowQuestions] = useState(false);
@@ -266,7 +267,62 @@ export default function LevelRole({
         </div>
       )}
 
-      {result && <LevelResult result={result} jobTitle={jobContext.jobTitle} />}
+      {result && (
+        <LevelResult
+          result={result}
+          jobTitle={jobContext.jobTitle}
+          isRefining={isRefining}
+          onRefine={async (additionalContext: string) => {
+            setIsRefining(true);
+            setError(null);
+            try {
+              // Build existing leveling answers context
+              const answeredQuestions = LEVELING_QUESTIONS.filter(
+                (q) => jobContext.levelingAnswers[q.id]?.trim()
+              );
+              let existingContext = "";
+              if (answeredQuestions.length > 0) {
+                existingContext =
+                  "\n\nAdditional context from the hiring manager:\n" +
+                  answeredQuestions
+                    .map(
+                      (q) =>
+                        `Q: ${q.title}\nA: ${jobContext.levelingAnswers[q.id].trim()}`
+                    )
+                    .join("\n\n");
+              }
+
+              const response = await fetch("/api/level", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  jobTitle: jobContext.jobTitle,
+                  department: jobContext.department,
+                  jobDescription:
+                    jobContext.jobDescription +
+                    existingContext +
+                    additionalContext,
+                }),
+              });
+
+              if (!response.ok) {
+                throw new Error("Failed to re-analyze job description");
+              }
+
+              const data = await response.json();
+              setResult(data);
+            } catch (err) {
+              setError(
+                err instanceof Error
+                  ? err.message
+                  : "An error occurred during re-analysis"
+              );
+            } finally {
+              setIsRefining(false);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
