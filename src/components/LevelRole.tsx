@@ -113,7 +113,7 @@ export default function LevelRole({ userEmail }: LevelRoleProps) {
               type="text"
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
-              placeholder="e.g. Senior Data Engineer"
+              placeholder="Job title"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none"
             />
           </div>
@@ -125,7 +125,7 @@ export default function LevelRole({ userEmail }: LevelRoleProps) {
               type="text"
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
-              placeholder="e.g. Engineering, Data Platform"
+              placeholder="Department or team"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none"
             />
           </div>

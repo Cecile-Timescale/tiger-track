@@ -216,7 +216,7 @@ export default function PerformanceImprovement() {
                   type="text"
                   value={employeeName}
                   onChange={(e) => setEmployeeName(e.target.value)}
-                  placeholder="e.g., Nicole Bahr"
+                  placeholder="Employee name"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none"
                 />
               </div>
@@ -228,7 +228,7 @@ export default function PerformanceImprovement() {
                   type="text"
                   value={currentRole}
                   onChange={(e) => setCurrentRole(e.target.value)}
-                  placeholder="e.g., Staff Product Marketing Manager"
+                  placeholder="Role or title"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none"
                 />
               </div>
@@ -240,7 +240,7 @@ export default function PerformanceImprovement() {
                   type="text"
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  placeholder="e.g., Marketing, Product Marketing"
+                  placeholder="Department or team"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none"
                 />
               </div>
@@ -291,7 +291,7 @@ export default function PerformanceImprovement() {
               <textarea
                 value={gapDescription}
                 onChange={(e) => setGapDescription(e.target.value)}
-                placeholder="e.g., Nicole struggles with cross-functional influence — she tends to stay within her own team and doesn't proactively drive alignment with Product and Sales. Her messaging work is strong but she needs to own the go-to-market strategy end-to-end rather than waiting for direction. She also needs to develop more junior team members instead of doing everything herself..."
+                placeholder="Describe what this person needs to improve on..."
                 rows={6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none resize-y"
               />
@@ -305,7 +305,7 @@ export default function PerformanceImprovement() {
               <textarea
                 value={strengths}
                 onChange={(e) => setStrengths(e.target.value)}
-                placeholder="e.g., Excellent writer, deep product knowledge, strong relationships with customers, very reliable on deadlines..."
+                placeholder="What does this person do well?"
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none resize-y"
               />

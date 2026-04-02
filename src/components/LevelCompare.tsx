@@ -278,7 +278,7 @@ export default function LevelCompare() {
                 setJobTitle(e.target.value);
                 setAiComparison(null);
               }}
-              placeholder="e.g., Senior Software Engineer"
+              placeholder="Job title"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none"
             />
           </div>
@@ -293,7 +293,7 @@ export default function LevelCompare() {
                 setDepartment(e.target.value);
                 setAiComparison(null);
               }}
-              placeholder="e.g., Engineering, Product, Sales"
+              placeholder="Department or team"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none"
             />
           </div>
