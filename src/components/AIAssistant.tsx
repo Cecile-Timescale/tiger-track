@@ -89,7 +89,7 @@ export default function AIAssistant({ messages, onMessagesChange }: AIAssistantP
             <div
               className={`max-w-[80%] rounded-xl px-4 py-3 text-sm ${
                 msg.role === "user"
-                  ? "bg-[#1a365d] text-white"
+                  ? "bg-[#0a0a0a] text-[#F5FF80]"
                   : "bg-gray-100 text-gray-800"
               }`}
             >
@@ -151,12 +151,12 @@ export default function AIAssistant({ messages, onMessagesChange }: AIAssistantP
             onKeyDown={handleKeyDown}
             placeholder="Ask about job leveling, career progression, or bar raiser assessments..."
             rows={1}
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none resize-none"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="bg-[#1a365d] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#2a4a7f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-[#0a0a0a] text-[#F5FF80] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#1a1a1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send
           </button>

@@ -1,27 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { LEVELS, getTrackLabel } from "@/lib/levelGuide";
-import { copyToClipboard, exportExecutiveSummaryPDF } from "@/lib/exportUtils";
-import ExportBar from "@/components/ExportBar";
-import type { LevelingResult } from "@/app/page";
+import { LEVELS, DIMENSION_LABELS, getTrackLabel } from "@/lib/levelGuide";
+
+interface LevelingResult {
+  recommendedLevel: string;
+  confidence: string;
+  reasoning: string;
+  dimensionScores: {
+    dimension: string;
+    suggestedLevel: string;
+    rationale: string;
+  }[];
+  questions: string[];
+}
 
 interface LevelResultProps {
   result: LevelingResult;
   jobTitle?: string;
-  onRefine?: (additionalContext: string) => void;
-  isRefining?: boolean;
 }
 
-export default function LevelResult({
-  result,
-  jobTitle,
-  onRefine,
-  isRefining,
-}: LevelResultProps) {
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [showRefinement, setShowRefinement] = useState(true);
-
+export default function LevelResult({ result, jobTitle }: LevelResultProps) {
   const level = LEVELS.find(
     (l) => l.code.toLowerCase() === result.recommendedLevel.toLowerCase()
   );
@@ -35,30 +33,12 @@ export default function LevelResult({
         ? "text-yellow-700 bg-yellow-50"
         : "text-red-700 bg-red-50";
 
-  const hasAnswers = Object.values(answers).some((a) => a.trim());
-
-  const handleRefine = () => {
-    if (!onRefine || !hasAnswers) return;
-    const contextParts = result.questions
-      .map((q, i) => {
-        const answer = answers[i]?.trim();
-        if (!answer) return null;
-        return `Q: ${q}\nA: ${answer}`;
-      })
-      .filter(Boolean);
-    onRefine(
-      "\n\nAdditional context provided to refine leveling:\n" +
-        contextParts.join("\n\n")
-    );
-  };
-
-  const buildPlainText = () => {
+  const handleDownload = () => {
     let content = `TIGER DATA - JOB LEVELING ANALYSIS\n`;
     content += `${"=".repeat(50)}\n\n`;
     if (jobTitle) content += `Job Title: ${jobTitle}\n`;
     content += `Recommended Level: ${result.recommendedLevel}`;
-    if (result.mappedTitle) content += ` — ${result.mappedTitle}`;
-    else if (level) content += ` - ${level.title}`;
+    if (level) content += ` - ${level.title}`;
     content += `\n`;
     if (level) content += `Track: ${getTrackLabel(level.track)}\n`;
     content += `Confidence: ${result.confidence}\n\n`;
@@ -68,26 +48,24 @@ export default function LevelResult({
       content += `\n${score.dimension}: ${score.suggestedLevel}\n`;
       content += `${score.rationale}\n`;
     }
-    return content;
-  };
+    if (result.questions.length > 0) {
+      content += `\nCLARIFYING QUESTIONS\n${"-".repeat(30)}\n`;
+      result.questions.forEach((q, i) => {
+        content += `${i + 1}. ${q}\n`;
+      });
+    }
 
-  const handleCopy = () => copyToClipboard(buildPlainText());
-
-  const handleExportPDF = () => {
-    exportExecutiveSummaryPDF({
-      jobTitle: jobTitle || "Untitled Role",
-      recommendedLevel: result.recommendedLevel,
-      mappedTitle: result.mappedTitle,
-      levelTitle: level?.title || "",
-      track: level ? getTrackLabel(level.track) : "N/A",
-      confidence: result.confidence,
-      reasoning: result.reasoning,
-      dimensionScores: result.dimensionScores,
-    });
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `leveling-analysis-${result.recommendedLevel}${jobTitle ? `-${jobTitle.replace(/\s+/g, "-").toLowerCase()}` : ""}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="space-y-4 pb-16">
+    <div className="space-y-4">
       {/* Main Result Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-start justify-between mb-4">
@@ -99,31 +77,42 @@ export default function LevelResult({
               <span className={`level-badge ${trackClass} text-xl px-4 py-1`}>
                 {result.recommendedLevel}
               </span>
-              {result.mappedTitle ? (
-                <span className="text-gray-900 font-semibold text-lg">{result.mappedTitle}</span>
-              ) : level ? (
-                <span className="text-gray-600 font-medium">{level.title}</span>
-              ) : null}
-            </div>
-            <div className="flex items-center gap-2 mt-1">
               {level && (
-                <p className="text-sm text-gray-500">
-                  {getTrackLabel(level.track)}
-                </p>
-              )}
-              {result.mappedTitle && level && (
-                <span className="text-sm text-gray-400">·</span>
-              )}
-              {result.mappedTitle && level && (
-                <p className="text-sm text-gray-400">{level.title}</p>
+                <span className="text-gray-600 font-medium">{level.title}</span>
               )}
             </div>
+            {level && (
+              <p className="text-sm text-gray-500 mt-1">
+                {getTrackLabel(level.track)}
+              </p>
+            )}
           </div>
-          <span
-            className={`text-xs font-medium px-2.5 py-1 rounded-full ${confidenceColor}`}
-          >
-            {result.confidence} Confidence
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-xs font-medium px-2.5 py-1 rounded-full ${confidenceColor}`}
+            >
+              {result.confidence} Confidence
+            </span>
+            <button
+              onClick={handleDownload}
+              className="text-sm text-[#0a0a0a] hover:text-[#333] font-medium flex items-center gap-1 border border-[#0a0a0a] px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Download
+            </button>
+          </div>
         </div>
 
         <div className="bg-gray-50 rounded-lg p-4">
@@ -161,116 +150,27 @@ export default function LevelResult({
         </div>
       </div>
 
-      {/* Interactive Clarifying Questions */}
+      {/* Clarifying Questions */}
       {result.questions.length > 0 && (
-        <div className="bg-[#F5FF80]/20 rounded-xl border border-[#F5FF80]/50 p-6">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-[#1A1A1A]">
-              Refine the Leveling
-            </h3>
-            <button
-              onClick={() => setShowRefinement(!showRefinement)}
-              className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              {showRefinement ? "Collapse" : "Expand"}
-            </button>
-          </div>
-          <p className="text-xs text-gray-600 mb-4">
-            Answer these questions to provide additional context. The analysis
-            will re-run with your answers to give a more accurate level.
+        <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
+          <h3 className="text-sm font-semibold text-blue-900 mb-2">
+            Questions to Refine the Leveling
+          </h3>
+          <p className="text-xs text-blue-700 mb-3">
+            Answering these questions could help refine the level recommendation:
           </p>
-
-          {showRefinement && (
-            <div className="space-y-4">
-              {result.questions.map((q, i) => (
-                <div key={i}>
-                  <label className="block text-sm text-gray-800 mb-1.5 font-medium">
-                    <span className="text-[#FF5B29] font-mono text-xs mr-1.5">
-                      {i + 1}.
-                    </span>
-                    {q}
-                  </label>
-                  <textarea
-                    value={answers[i] || ""}
-                    onChange={(e) =>
-                      setAnswers((prev) => ({ ...prev, [i]: e.target.value }))
-                    }
-                    placeholder="Your answer..."
-                    rows={2}
-                    className="w-full px-3 py-2 border border-[#F5FF80]/60 bg-white rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80] focus:border-[#1A1A1A] outline-none resize-y"
-                  />
-                </div>
-              ))}
-
-              {onRefine && (
-                <button
-                  onClick={handleRefine}
-                  disabled={!hasAnswers || isRefining}
-                  className="bg-[#1A1A1A] text-[#F5FF80] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#2A2A2A] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isRefining ? (
-                    <>
-                      <svg
-                        className="animate-spin h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                        />
-                      </svg>
-                      Re-analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="15"
-                        height="15"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      >
-                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
-                      </svg>
-                      Re-analyze with Additional Context
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
-          )}
+          <ul className="space-y-2">
+            {result.questions.map((q, i) => (
+              <li key={i} className="text-sm text-blue-800 flex gap-2">
+                <span className="text-blue-400 font-mono text-xs mt-0.5">
+                  {i + 1}.
+                </span>
+                {q}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
-
-      {/* Sticky Export Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] px-6 py-3 z-50">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <span className="text-xs text-gray-500 font-medium">
-            Level:{" "}
-            <span className="text-gray-900">
-              {result.recommendedLevel}
-              {level ? ` — ${level.title}` : ""}
-            </span>
-          </span>
-          <ExportBar
-            onCopy={handleCopy}
-            onExportPDF={handleExportPDF}
-            copyLabel="Copy Result"
-          />
-        </div>
-      </div>
     </div>
   );
 }

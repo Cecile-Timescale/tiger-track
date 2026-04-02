@@ -163,7 +163,7 @@ export default function LevelCompare() {
                     onClick={() => setActiveDimension(key)}
                     className={`px-4 py-3 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
                       activeDimension === key
-                        ? "text-[#1a365d] border-[#1a365d] bg-blue-50"
+                        ? "text-[#0a0a0a] border-[#0a0a0a] bg-gray-50"
                         : "text-gray-500 border-transparent hover:text-gray-700 hover:bg-gray-50"
                     }`}
                   >

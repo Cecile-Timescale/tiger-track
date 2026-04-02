@@ -148,7 +148,7 @@ export default function LevelRole({ userEmail }: LevelRoleProps) {
           <button
             onClick={handleAnalyze}
             disabled={isAnalyzing || !jobDescription.trim()}
-            className="bg-[#1a365d] text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[#2a4a7f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="bg-[#0a0a0a] text-[#F5FF80] px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-[#1a1a1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isAnalyzing ? (
               <>

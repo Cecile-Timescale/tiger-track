@@ -1,13 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --tiger-yellow: #F5FF80;
-  --tiger-dark: #1A1A1A;
-  --tiger-dark-light: #2A2A2A;
-  --tiger-orange: #FF5B29;
-  --tiger-orange-hover: #E04D20;
+  --tiger-brand: #F5FF80;
+  --tiger-brand-hover: #e8f270;
+  --tiger-dark: #0a0a0a;
+  --tiger-dark-card: #141414;
+  --tiger-blue: #1a365d;
+  --tiger-blue-light: #2a4a7f;
+  --tiger-accent: #F5FF80;
   --tiger-gray: #64748b;
-  --tiger-bg: #f5f5f5;
+  --tiger-bg: #f8fafc;
 }
 
 body {
@@ -33,6 +35,6 @@ body {
   font-size: 14px;
 }
 
-.level-badge.ic { background: #F5FF80; color: #1A1A1A; }
-.level-badge.mgr { background: #2A2A2A; color: #F5FF80; }
-.level-badge.exec { background: #FF5B29; color: white; }
+.level-badge.ic { background: #dbeafe; color: #1e40af; }
+.level-badge.mgr { background: #e2e8f0; color: #1e293b; }
+.level-badge.exec { background: #fef9c3; color: #854d0e; }

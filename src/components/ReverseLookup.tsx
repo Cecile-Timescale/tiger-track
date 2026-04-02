@@ -8,8 +8,6 @@ import {
   type Level,
   type TrackType,
 } from "@/lib/levelGuide";
-import { copyToClipboard, exportToPDF } from "@/lib/exportUtils";
-import ExportBar from "@/components/ExportBar";
 
 export default function ReverseLookup() {
   const [selectedTrack, setSelectedTrack] = useState<TrackType | "all">("all");
@@ -20,7 +18,7 @@ export default function ReverseLookup() {
       ? LEVELS
       : LEVELS.filter((l) => l.track === selectedTrack);
 
-  const buildLevelText = (level: Level) => {
+  const handleDownload = (level: Level) => {
     let content = `TIGER DATA - LEVEL REQUIREMENTS\n`;
     content += `${"=".repeat(50)}\n\n`;
     content += `Level: ${level.code} - ${level.title}\n`;
@@ -33,32 +31,14 @@ export default function ReverseLookup() {
       content += `Criteria:\n${dim.criteria}\n\n`;
       content += `Expected Behaviors:\n${dim.expectedBehaviors}\n\n`;
     }
-    return content;
-  };
 
-  const handleCopy = (level: Level) => copyToClipboard(buildLevelText(level));
-
-  const handleCopyAll = () => {
-    const allText = filteredLevels.map(buildLevelText).join("\n\n");
-    return copyToClipboard(allText);
-  };
-
-  const handleExportPDF = (level: Level) => {
-    const sections: { heading?: string; subheading?: string; body?: string; spacerAfter?: number }[] = [
-      { body: level.description, spacerAfter: 4 },
-    ];
-    for (const [key, label] of Object.entries(DIMENSION_LABELS)) {
-      const dim = level.dimensions[key as keyof typeof level.dimensions];
-      sections.push({ heading: label });
-      sections.push({ subheading: "Criteria", body: dim.criteria, spacerAfter: 2 });
-      sections.push({ subheading: "Expected Behaviors", body: dim.expectedBehaviors, spacerAfter: 4 });
-    }
-    exportToPDF(
-      `${level.code} — ${level.title}`,
-      `${getTrackLabel(level.track)} • Tiger Data Level Guide`,
-      sections,
-      `tiger-track-${level.code}-requirements.pdf`
-    );
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tiger-data-level-${level.code}-requirements.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -69,7 +49,7 @@ export default function ReverseLookup() {
         </h2>
         <p className="text-sm text-gray-500 mb-5">
           Select a level to view its full requirements across all dimensions.
-          Export or copy the requirements to share with managers or include in job
+          Download the requirements to share with managers or include in job
           postings.
         </p>
 
@@ -89,7 +69,7 @@ export default function ReverseLookup() {
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 selectedTrack === track.id
-                  ? "bg-[#1A1A1A] text-[#F5FF80]"
+                  ? "bg-[#0a0a0a] text-[#F5FF80]"
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
@@ -103,10 +83,10 @@ export default function ReverseLookup() {
           {filteredLevels.map((level) => {
             const trackClass =
               level.track === "ic"
-                ? "border-[#F5FF80] bg-[#F5FF80]/15 hover:bg-[#F5FF80]/30"
+                ? "border-blue-300 bg-blue-50 hover:bg-blue-100"
                 : level.track === "manager"
-                  ? "border-[#2A2A2A]/30 bg-[#1A1A1A]/5 hover:bg-[#1A1A1A]/10"
-                  : "border-[#FF5B29]/40 bg-[#FF5B29]/10 hover:bg-[#FF5B29]/20";
+                  ? "border-gray-300 bg-gray-50 hover:bg-gray-100"
+                  : "border-yellow-300 bg-yellow-50 hover:bg-yellow-100";
             const isSelected = selectedLevel?.id === level.id;
 
             return (
@@ -115,7 +95,7 @@ export default function ReverseLookup() {
                 onClick={() => setSelectedLevel(level)}
                 className={`p-3 rounded-lg border-2 text-left transition-all ${
                   isSelected
-                    ? "border-[#1A1A1A] ring-2 ring-[#F5FF80]/40 bg-white"
+                    ? "border-[#0a0a0a] ring-2 ring-[#0a0a0a]/20 bg-white"
                     : trackClass
                 }`}
               >
@@ -134,7 +114,7 @@ export default function ReverseLookup() {
       {/* Level Detail */}
       {selectedLevel && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-start justify-between mb-4">
+          <div className="flex items-start justify-between mb-5">
             <div>
               <div className="flex items-center gap-3">
                 <span
@@ -155,16 +135,25 @@ export default function ReverseLookup() {
                 {selectedLevel.description}
               </p>
             </div>
-          </div>
-
-          <div className="mb-5">
-            <ExportBar
-              onCopy={() => handleCopy(selectedLevel)}
-              onCopyAll={handleCopyAll}
-              onExportPDF={() => handleExportPDF(selectedLevel)}
-              copyLabel="Copy Level"
-              copyAllLabel={`Copy All ${selectedTrack === "all" ? "Levels" : getTrackLabel(selectedTrack === "ic" ? "ic" : selectedTrack === "manager" ? "manager" : "executive")}`}
-            />
+            <button
+              onClick={() => handleDownload(selectedLevel)}
+              className="text-sm text-[#0a0a0a] hover:text-[#333] font-medium flex items-center gap-1 border border-[#0a0a0a] px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Download Requirements
+            </button>
           </div>
 
           <div className="space-y-4">
