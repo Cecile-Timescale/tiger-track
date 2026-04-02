@@ -5,12 +5,14 @@ import Header from "@/components/Header";
 import TabNav from "@/components/TabNav";
 import LevelRole from "@/components/LevelRole";
 import ReverseLookup from "@/components/ReverseLookup";
+import BarRaiser from "@/components/BarRaiser";
+import PerformanceImprovement from "@/components/PerformanceImprovement";
 import LevelCompare from "@/components/LevelCompare";
 import LevelHistory from "@/components/LevelHistory";
 import AIAssistant from "@/components/AIAssistant";
 import LoginGate from "@/components/LoginGate";
 
-type Tab = "level" | "lookup" | "compare" | "history" | "assistant";
+type Tab = "level" | "lookup" | "barraiser" | "performance" | "compare" | "history" | "assistant";
 
 export interface JobContext {
   jobTitle: string;
@@ -101,6 +103,8 @@ export default function Home() {
         <div className="mt-6">
           {activeTab === "level" && <LevelRole userEmail={currentUser} />}
           {activeTab === "lookup" && <ReverseLookup />}
+          {activeTab === "barraiser" && <BarRaiser />}
+          {activeTab === "performance" && <PerformanceImprovement />}
           {activeTab === "compare" && <LevelCompare />}
           {activeTab === "history" && <LevelHistory userEmail={currentUser} />}
           {activeTab === "assistant" && (

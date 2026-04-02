@@ -1,6 +1,6 @@
 "use client";
 
-type Tab = "level" | "lookup" | "compare" | "history" | "assistant";
+type Tab = "level" | "lookup" | "barraiser" | "performance" | "compare" | "history" | "assistant";
 
 interface TabNavProps {
   activeTab: Tab;
@@ -10,6 +10,8 @@ interface TabNavProps {
 const tabs: { id: Tab; label: string; icon: string }[] = [
   { id: "level", label: "Level a Role", icon: "📋" },
   { id: "lookup", label: "Level Requirements", icon: "🔍" },
+  { id: "barraiser", label: "Bar Raiser", icon: "⚡" },
+  { id: "performance", label: "Performance", icon: "📊" },
   { id: "compare", label: "Compare Levels", icon: "⚖️" },
   { id: "history", label: "History", icon: "📜" },
   { id: "assistant", label: "AI Assistant", icon: "💬" },

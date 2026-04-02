@@ -23,6 +23,8 @@ type DimensionKey = (typeof DIMENSION_KEYS)[number];
 export default function LevelCompare() {
   const [leftCode, setLeftCode] = useState<string>("");
   const [rightCode, setRightCode] = useState<string>("");
+  const [jobTitle, setJobTitle] = useState<string>("");
+  const [department, setDepartment] = useState<string>("");
   const [activeDimension, setActiveDimension] = useState<DimensionKey>(
     "knowledgeExperience"
   );
@@ -52,7 +54,7 @@ export default function LevelCompare() {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none bg-white"
       >
         <option value="">Select a level...</option>
         {trackGroups.map((group) => (
@@ -144,6 +146,34 @@ export default function LevelCompare() {
           calibration.
         </p>
 
+        {/* Role context */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Job Title
+            </label>
+            <input
+              type="text"
+              value={jobTitle}
+              onChange={(e) => setJobTitle(e.target.value)}
+              placeholder="e.g., Senior Software Engineer"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Department / Team
+            </label>
+            <input
+              type="text"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              placeholder="e.g., Engineering, Product, Sales"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none"
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {renderSelect(leftCode, setLeftCode, "Level A")}
           {renderSelect(rightCode, setRightCode, "Level B")}
@@ -187,6 +217,8 @@ export default function LevelCompare() {
             <div className="bg-indigo-50 rounded-xl border border-indigo-200 p-5">
               <h3 className="text-sm font-semibold text-indigo-900 mb-2">
                 Key Differences: {leftLevel.code} vs {rightLevel.code}
+                {jobTitle && ` for ${jobTitle}`}
+                {department && ` (${department})`}
               </h3>
               <div className="space-y-2">
                 {DIMENSION_KEYS.map((key) => {
