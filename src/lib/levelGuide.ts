@@ -121,7 +121,7 @@ export const LEVELS: Level[] = [
         expectedBehaviors: "Communicates effectively within and outside their job function, including external parties, to influence operational-level decisions on policies, practices, and procedures. Draws on broad experiences and understanding to adapt communication strategies as needed. Understands whom to consult or inform beyond their job function's direct network.",
       },
       leadershipTalentMgmt: {
-        criteria: "May be responsible for providing guidance, coaching and training to other team members within the job area. May manage projects at this level, requiring responsibility for the delegation of work and the review of others' work product.",
+        criteria: "May be responsible for providing guidance, coaching and training to other team members within the job area. May lead projects, which includes assigning tasks to others and reviewing their work.",
         expectedBehaviors: "Provides guidance, coaching, and training to team members within the job area. Manage projects by effectively delegating tasks and reviewing team members' work to ensure high-quality outcomes.",
       },
     },
@@ -344,28 +344,28 @@ export const LEVELS: Level[] = [
     level: 5,
     track: "manager",
     code: "M5",
-    title: "Director",
-    description: "Leads a function through strategic direction, impactful delivery, improving productivity and accountability, driving cross-functional alignment and outcomes, enhancing manager effectiveness, and developing talent. Sets function's annual objectives aligned with department strategy.",
+    title: "Director / Expert Manager",
+    description: "Manages a department or a small unit that includes highly technical professionals. Responsible for execution of strategy and operations within department/small unit. Responsible for making moderate or significant innovation within department.",
     dimensions: {
       knowledgeExperience: {
-        criteria: "Expert knowledge (SME) of function(s)' domain in context of other functions, company, and competitive environment. Requires broad management and leadership knowledge to lead multiple job areas with mastery-level skills within a specific discipline and broad understanding of adjacent areas. Typically requires minimum 10 years prior relevant experience.",
-        expectedBehaviors: "Demonstrates deep functional expertise and understands how their function connects to adjacent areas, the company, and the competitive landscape. Leads a function, delivering through Managers and Senior Managers.",
+        criteria: "Requires broad management and leadership knowledge to lead multiple job areas. Typically has mastery level knowledge and skills within a specific technical or professional discipline with broad understanding of other areas within the job function. Typically requires a University Degree or equivalent experience and minimum 10 years prior relevant experience.",
+        expectedBehaviors: "Has broad management and leadership knowledge to lead multiple job areas with mastery in a specific discipline and 10+ years experience.",
       },
       organizationalImpact: {
-        criteria: "Leads a function, delivering through Managers/Sr. Managers. Sets function's annual objectives aligned with department strategy. Designs, optimizes, and scales functional structure to support growth. Drives continuous improvement of operations to enhance productivity and accountability. Makes timely, informed strategic decisions in the face of ambiguity. May have budget accountability for the function.",
-        expectedBehaviors: "Sets annual objectives aligned with department strategy. Designs and scales functional structure for growth. Drives continuous improvement and makes strategic decisions in ambiguity. Establishes operational plans with short-to-mid-term impact (1-2 years).",
+        criteria: "Recommends operational plans and strategies that will directly impact the achievement of overall functional results. Directs the execution of strategies established by functional leadership. Establishes operational plans for the job area with short-to mid-term impact on results (e.g., 1-2 years). Work requires a high degree of responsibility for resources, and frequently influences business decisions made by functional leadership. May have budget accountability for the leadership, department.",
+        expectedBehaviors: "Recommends operational plans and strategies that will directly impact the achievement of overall functional results. Work requires a high degree of responsibility for resources, and frequently influences business decisions made by functional leadership.",
       },
       innovationComplexity: {
-        criteria: "Responsible for moderate to significant improvements of processes, systems, or products. Problems are numerous and undefined, requiring detailed information gathering and analysis. Problems are difficult and moderately complex, typically impacting multiple departments or specialties. Designs, optimizes, and scales functional structure to support growth.",
-        expectedBehaviors: "Makes timely, informed strategic decisions in the face of ambiguity. Drives continuous improvement and designs functional structure that supports growth and scale. Solves moderately complex problems that impact multiple departments.",
+        criteria: "Responsible for making moderate to significant improvements of processes, systems or products to enhance performance of the job area. Problems and issues faced are numerous and undefined, and require detailed information gathering, analysis and investigation to understand the problem. Problems are difficult and moderately complex. Problems typically impact multiple departments or specialties. Problems are typically solved through drawing from prior experience and analysis of issues.",
+        expectedBehaviors: "Handles numerous, undefined problems that are difficult and moderately complex, impacting multiple departments or specialties.",
       },
       communicationInfluence: {
-        criteria: "Trusted relationships with key cross-functional peers and teams. Aligns objectives and initiatives to drive collective outcomes. Communicates with parties within and outside of own job function, including external parties. Requires ability to communicate with executive leadership regarding matters of significant importance to the organization.",
-        expectedBehaviors: "Builds trusted relationships with cross-functional peers to align objectives and drive collective outcomes. Communicates with executive leadership on matters of significant organizational importance.",
+        criteria: "Communicates with parties within and outside of its own job function, and typically has responsibilities for communicating with parties external to the organization, which may include customers or vendors. Requires ability to communicate with executive leadership regarding matters of significant importance to the organization.",
+        expectedBehaviors: "Communicates with executive leadership on matters of significant importance to the organization.",
       },
       leadershipTalentMgmt: {
-        criteria: "Develops Managers/Sr. Managers and proactively builds leadership bench to optimize talent to meet current business needs. Fosters a high-performance culture that reflects company values, inclusion, agility and ownership. Maintains a pulse on functional health and uses data insights to drive improvements to the employee experience function-wide.",
-        expectedBehaviors: "Proactively builds a leadership bench and develops managers. Fosters a high-performance culture reflecting company values. Uses data insights to improve employee experience across the function.",
+        criteria: "Manages a department or a small unit that includes highly technical professionals. Typically has hiring, termination, promotion and reward authority within its own area, in accordance with Company Guidelines.",
+        expectedBehaviors: "Recommends operational plans and strategies that will directly impact the achievement of overall functional results. Work requires a high degree of responsibility for resources, and frequently influences business decisions made by functional leadership. Requires mastery-level knowledge and a minimum of 10 years of experience.",
       },
     },
   },
@@ -374,33 +374,33 @@ export const LEVELS: Level[] = [
     level: 6,
     track: "manager",
     code: "M6",
-    title: "Senior Director",
-    description: "Leads function(s) through visionary direction, scalable delivery, and maturing operations. Drives cross-functional outcomes, talent strategy for future needs, and sets functional vision aligned with department strategy. Delivers through Sr. Managers and Directors.",
+    title: "Senior Director / Manage Department",
+    description: "Manages multiple departments or a large unit that includes multiple teams led by Managers and/or Supervisors. Responsible for overall execution of strategy within department/large unit and significant innovations. Requires advanced management and leadership ability.",
     dimensions: {
       knowledgeExperience: {
-        criteria: "Broad knowledge of function's domain, company, and competitive environment. Advanced management and leadership knowledge to lead cross-department project teams or manage across multiple functions. Typically has mastery within a specific technical area or broad expertise across multiple related disciplines. Minimum 12 years prior relevant experience.",
-        expectedBehaviors: "Demonstrates broad knowledge of the function's domain and the competitive environment. Leads function(s), delivering through Sr. Managers/Directors. Sets functional vision aligned with department strategy.",
+        criteria: "Requires advanced management and leadership knowledge to lead cross-department project teams or manage across multiple functions. Typically has mastery within a specific technical or broad expertise across multiple related disciplines. Typically requires a University Degree or equivalent experience and minimum 12 years prior relevant experience.",
+        expectedBehaviors: "Has advanced management and leadership knowledge with mastery in a specific technical area or broad expertise across disciplines, with 12+ years experience.",
       },
       organizationalImpact: {
-        criteria: "Leads function(s), delivering through Sr. Managers/Directors. Sets functional vision aligned with department strategy. Designs, optimizes and scales functional structure to support growth. Oversees maturation of operations, optimizing resource allocation and utilization. Makes strategic decisions in the face of ambiguity. May have budget responsibility for the area.",
-        expectedBehaviors: "Sets functional vision aligned with department strategy. Oversees maturation of operations and optimizes resource allocation. Makes strategic decisions in ambiguity. Scales functional structure for growth.",
+        criteria: "Owns and develops tactical and operational plans and goals for a global critical area/product, sub-function, or geography which typically includes oversight for multiple departments or disciplines. Directs activities that have direct impact on the achievement of results for areas of responsibility. Recommends and operationalizes strategies that have a direct impact on the achievement of strategies. Work requires a high degree of responsibility for resources, and frequently influences business decisions made by leadership. Recommends and implements new products, processes, policies, standards or operating plans in support of job function strategy. May have budget responsibility for the area.",
+        expectedBehaviors: "Oversees multiple teams, directing cross-department strategies and operations.",
       },
       innovationComplexity: {
-        criteria: "Responsible for improving upon entire processes or systems using significant conceptualizing, reasoning and interpretation skills. Problems are numerous, undefined, and frequently complex — information is typically difficult to obtain. Problems involve consideration of multiple sites, geographies, products or customers. Designs, optimizes and scales functional structure to support growth.",
-        expectedBehaviors: "Makes strategic decisions in the face of ambiguity. Improves entire processes or systems, handling complex problems spanning multiple geographies, products, or customers. Designs and scales structure for growth.",
+        criteria: "Responsible for improving upon entire processes or systems using significant conceptualizing, reasoning and interpretation skills. Problems and issues faced are numerous and undefined, where information is typically difficult to obtain. Conducts extensive investigation to understand the root cause of problems. Problems are frequently complex. Problems typically involve consideration of multiple sites, geographies, products or customers. Problems are typically solved through drawing from prior experience and analysis of issues.",
+        expectedBehaviors: "Improves entire processes or systems, handling frequently complex problems involving multiple sites, geographies, products or customers.",
       },
       communicationInfluence: {
-        criteria: "Trusted relationships with peers, VPs, stakeholders, external partners and customers. Company-first mindset, incorporating diverse perspectives. Communicates with parties within and outside of own job function and with executive leadership on matters of significant importance to the organization.",
-        expectedBehaviors: "Builds trusted relationships with peers, VPs, and external stakeholders. Operates with a company-first mindset, incorporating diverse perspectives. Communicates on strategic matters with executive leadership.",
+        criteria: "Communicates with parties within and outside of its own job function, and typically has responsibilities for communicating with parties external to the organization, which may include customers or vendors. Requires ability to communicate with executive leadership regarding matters of significant importance to the organization.",
+        expectedBehaviors: "Communicates on strategic matters with executive leadership and handles complex, organization-wide problem-solving.",
       },
       leadershipTalentMgmt: {
-        criteria: "Develops Sr. Managers/Directors and builds leadership bench. Optimizes talent to meet evolving business needs. Cultivates culture that reflects company values, inclusion, agility, and ownership among leaders and teams. Uses data insights to enhance the employee experience function- and department-wide.",
-        expectedBehaviors: "Develops senior leaders and builds a leadership bench for future needs. Cultivates culture and ownership among leaders and teams. Uses data insights to enhance employee experience across the function and department.",
+        criteria: "Manages multiple departments or a large unit that includes multiple teams led by Managers and/or Supervisors. Typically has hiring, termination, promotion and reward authority within its own area, in accordance with Corporate Guidelines.",
+        expectedBehaviors: "Oversees multiple teams, directing cross-department strategies and operations. Requires advanced management expertise and at least 12 years of experience. Communicates on strategic matters with executive leadership and handles complex, organization-wide problem-solving.",
       },
     },
   },
   // ============================================
-  // SENIOR LEADERS / EXECUTIVES (VP / SVP)
+  // SENIOR LEADERS / EXECUTIVES (M5-M8 / VP / SVP)
   // ============================================
   {
     id: "vp",
@@ -408,27 +408,27 @@ export const LEVELS: Level[] = [
     track: "executive",
     code: "VP",
     title: "Vice President",
-    description: "Drives company success by setting visionary direction, scalable delivery, operational maturity, cross-functional alignment, and shaping talent strategy for future growth. Leads department(s) delivering through Directors/Sr. Directors. Sets department vision aligned with company strategy.",
+    description: "Senior functional executive responsible for setting vision and strategy for a major function. Owns company-level outcomes and translates company strategy into executable plans through Directors and Senior Managers. Acts as a core member of the executive team.",
     dimensions: {
       knowledgeExperience: {
-        criteria: "Broad knowledge of department's domain, company, and competitive environment at local and global level. Deep functional expertise combined with strong business and strategic acumen. Broad understanding of how their department integrates with product, revenue, operations, and finance. Typically 15+ years of progressively responsible experience, including senior leadership roles.",
-        expectedBehaviors: "Demonstrates broad knowledge of the department's domain and the competitive environment at local and global level. Leads department(s), delivering through Directors/Sr. Directors. Sets department vision aligned with company strategy.",
+        criteria: "Deep functional expertise combined with strong business and strategic acumen. Broad understanding of how their function integrates with product, revenue, operations, and finance. Typically 15+ years of progressively responsible experience, including senior leadership roles. Experience scaling teams, systems, and outcomes in growth-stage companies.",
+        expectedBehaviors: "Deep functional expertise combined with strong business and strategic acumen. Broad understanding of cross-functional integration. 15+ years of progressively responsible experience.",
       },
       organizationalImpact: {
-        criteria: "Leads department(s) delivering through Directors/Sr. Directors. Sets department vision aligned with company strategy. Designs department's long-term structure ensuring scalability for growth. Sets direction for operational excellence at next level of scale, identifying investment areas for sustainable growth. Makes decisions that balance risk with opportunity, benefit company and stakeholders, and withstand board-level scrutiny.",
-        expectedBehaviors: "Sets department vision aligned with company strategy. Designs long-term departmental structure for scalability. Sets direction for operational excellence at scale. Makes decisions that balance risk and opportunity and withstand board-level scrutiny.",
+        criteria: "Owns strategy and results for a core function critical to company success. Drives company-level outcomes through cross-functional partnership. Establishes multi-year functional roadmaps aligned with company strategy. Accountable for results delivered through Directors and Senior Managers. Owns significant budgets and resource allocation for their function.",
+        expectedBehaviors: "Owns strategy and results for a core function. Drives company-level outcomes and establishes multi-year roadmaps aligned with company strategy.",
       },
       innovationComplexity: {
-        criteria: "Operates in highly ambiguous environments with incomplete or evolving data. Solves complex, cross-functional problems with material business impact. Designs department's long-term structure ensuring scalability for growth. Sets direction for operational excellence at the next level of scale, identifying investment areas for sustainable growth.",
-        expectedBehaviors: "Operates in highly ambiguous environments, solving complex cross-functional problems with material business impact. Designs scalable structures and sets direction for operational excellence at scale.",
+        criteria: "Operates in highly ambiguous environments with incomplete or evolving data. Solves complex, cross-functional problems with material business impact. Designs scalable systems, processes, and operating models to support growth. Balances short-term execution with long-term strategic investments.",
+        expectedBehaviors: "Operates in highly ambiguous environments, solving complex cross-functional problems with material business impact.",
       },
       communicationInfluence: {
-        criteria: "High-level relationships across company and industry, modeling a company-first mindset, identifying company-wide needs, challenges, and priorities. Trusted strategic partner to the CEO and executive leadership team. Regularly presents to the Board of Directors on department strategy, performance, risks, and opportunities. Represents the company externally with executives, investors, partners, and industry leaders.",
-        expectedBehaviors: "Builds high-level relationships across the company and industry. Models a company-first mindset and identifies company-wide needs and priorities. Trusted strategic partner to the CEO. Regularly presents to the Board. Represents the company externally.",
+        criteria: "Trusted strategic partner to the CEO and executive leadership team. Influences decisions at the highest levels of the organization. Regularly presents to the Board of Directors on functional strategy, performance, risks, and opportunities. Represents the company externally with executives, investors, partners, and industry leaders as appropriate. Shapes executive-level alignment, decision-making, and company narrative within their functional scope.",
+        expectedBehaviors: "Trusted strategic partner to the CEO. Influences decisions at the highest levels. Regularly presents to the Board. Represents the company externally.",
       },
       leadershipTalentMgmt: {
-        criteria: "Oversees departmental performance and develops Directors/Sr. Directors. Establishes succession planning for long-term company strategy. Defines high-performance culture and exemplifies company values through actions. Leads organization-level change aligned to company success.",
-        expectedBehaviors: "Actively coaches and sponsors Directors/Sr. Directors for growth into executive roles. Builds a robust succession pipeline across the department. Drives cultural transformation by visibly modeling company values and holding leaders accountable. Champions and steers large-scale organizational change initiatives that directly support company-wide strategic objectives.",
+        criteria: "Builds and leads a strong leadership bench (Directors, Senior Managers). Sets expectations for leadership quality, accountability, and performance. Owns succession planning and talent strategy for the function. Models company values and fosters a high-performance, inclusive culture.",
+        expectedBehaviors: "Builds and leads a strong leadership bench. Sets expectations for leadership quality. Owns succession planning and talent strategy for the function.",
       },
     },
   },
@@ -438,27 +438,27 @@ export const LEVELS: Level[] = [
     track: "executive",
     code: "SVP",
     title: "Senior Vice President",
-    description: "Drives the company's strategic direction and operational excellence, proactively addressing market shifts and emerging opportunities. Ensures sustainable growth, alignment, and a values-driven culture across the organization. Leads department(s) delivering through Sr. Directors/VPs. Shapes org and company strategy.",
+    description: "Company-wide executive responsible for owning and integrating multiple major departments or business systems (e.g., Revenue, Product & Engineering). Accountable for outcomes across broad scopes that materially shape company trajectory.",
     dimensions: {
       knowledgeExperience: {
-        criteria: "Broad knowledge of department(s)' domain, company, and competitive environment at local and global level. Broad, enterprise-level understanding of business strategy and operations. Deep leadership experience across multiple functions or complex business domains. Typically 18-20+ years of experience, including executive leadership roles. Proven ability to lead through scale, complexity, and organizational change.",
-        expectedBehaviors: "Demonstrates broad knowledge of the department(s)' domain and the competitive environment at local and global level. Leads department(s), delivering through Sr. Directors/VPs. Shapes org and company strategy, anticipating and navigating market shifts and emerging trends.",
+        criteria: "Broad, enterprise-level understanding of business strategy and operations. Deep leadership experience across multiple functions or complex business domains. Typically 18-20+ years of experience, including executive leadership roles. Proven ability to lead through scale, complexity, and organizational change.",
+        expectedBehaviors: "Broad enterprise-level understanding of business strategy. Deep leadership experience across multiple functions. 18-20+ years including executive leadership roles.",
       },
       organizationalImpact: {
-        criteria: "Leads department(s) delivering through Sr. Directors/Directors/VPs. Shapes org and company strategy. Anticipates and navigates market shifts, emerging trends. Evolves organizational structures across multiple departments, ensuring scalability, adaptability for company's growth trajectory. Sets direction for operational excellence and metrics at scale. Prioritizes investment opportunities for scalable growth. Makes decisions that balance risk with strategic opportunity, withstand board-level scrutiny, impact the company's trajectory, and produce long-term value.",
-        expectedBehaviors: "Shapes org and company strategy. Evolves organizational structures across multiple departments for scalability. Sets direction for operational excellence at scale. Makes decisions that balance risk, withstand board-level scrutiny, and produce long-term enterprise value.",
+        criteria: "Owns strategy and results across multiple major functions or an end-to-end business system. Drives alignment and execution across departments with interdependent outcomes. Accountable for company-wide initiatives that span functions and materially impact growth, scale, and sustainability. Oversees large budgets and resource allocation across departments. Ensures functional strategies reinforce one another and support company goals.",
+        expectedBehaviors: "Owns strategy and results across multiple major functions or an end-to-end business system. Drives alignment across departments with interdependent outcomes.",
       },
       innovationComplexity: {
-        criteria: "Addresses the most complex, systemic challenges facing the company. Designs and evolves operating models across departments to support scale. Anticipates future organizational, market, and business needs. Makes tradeoffs across functions to optimize overall company performance. Evolves organizational structures across multiple departments ensuring scalability and adaptability.",
-        expectedBehaviors: "Addresses the most complex systemic challenges facing the company. Evolves organizational structures and operating models across multiple departments. Anticipates future market and business needs. Makes cross-functional tradeoffs to optimize company performance.",
+        criteria: "Addresses the most complex, systemic challenges facing the company. Designs and evolves operating models across departments to support scale. Anticipates future organizational, market, and business needs. Makes tradeoffs across functions to optimize overall company performance.",
+        expectedBehaviors: "Addresses the most complex, systemic challenges facing the company. Designs and evolves operating models across departments.",
       },
       communicationInfluence: {
-        criteria: "Enterprise-wide and industry relationships, modeling a company-first mindset and cross-functional priorities. Attracts strategic partners and customers through industry credibility. Partners closely with the CEO and executive team on enterprise strategy and execution. Drives alignment across executive leaders with differing priorities and constraints. Represents the company externally across multiple business areas.",
-        expectedBehaviors: "Builds enterprise-wide and industry relationships. Models a company-first mindset at the highest level. Attracts strategic partners through industry credibility. Partners closely with the CEO on enterprise strategy. Drives alignment across executive leaders with differing priorities.",
+        criteria: "Partners closely with the CEO and executive team on enterprise strategy and execution. Drives alignment across executive leaders with differing priorities and constraints. Represents the company externally when scope spans multiple business areas. Ensures clarity, consistency, and alignment across executive-level decisions and communication.",
+        expectedBehaviors: "Partners closely with the CEO and executive team. Drives alignment across executive leaders. Represents the company externally across multiple business areas.",
       },
       leadershipTalentMgmt: {
-        criteria: "Oversees departmental performance ensuring high performance. Builds world-class leadership bench, establishing succession to deliver long-term strategy and future business demands. Drives high-performance, values-driven culture, setting the tone through actions. Steers transformational change at the company level.",
-        expectedBehaviors: "Builds a world-class leadership bench and establishes succession for long-term strategy. Drives high-performance, values-driven culture and sets the tone through actions. Steers transformational change at the company level.",
+        criteria: "Develops and mentors VPs and senior executives across departments. Owns executive succession planning for their scope. Sets the bar for leadership excellence across multiple functions. Acts as a steward of company culture, values, and long-term health.",
+        expectedBehaviors: "Develops and mentors VPs and senior executives. Owns executive succession planning. Sets the bar for leadership excellence across multiple functions.",
       },
     },
   },
