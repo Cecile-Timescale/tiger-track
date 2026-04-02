@@ -12,6 +12,26 @@ import LoginGate from "@/components/LoginGate";
 
 type Tab = "level" | "lookup" | "compare" | "history" | "assistant";
 
+export interface JobContext {
+  jobTitle: string;
+  department: string;
+  jobDescription: string;
+  levelingAnswers: Record<string, string>;
+}
+
+export interface LevelingResult {
+  recommendedLevel: string;
+  mappedTitle?: string;
+  confidence: string;
+  reasoning: string;
+  dimensionScores: {
+    dimension: string;
+    suggestedLevel: string;
+    rationale: string;
+  }[];
+  questions: string[];
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
