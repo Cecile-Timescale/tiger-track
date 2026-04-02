@@ -22,22 +22,37 @@ interface LevelResultProps {
   result: LevelingResult;
   jobTitle?: string;
   department?: string;
+  jobDescription?: string;
+  onResultUpdate?: (newResult: LevelingResult) => void;
 }
 
-export default function LevelResult({ result, jobTitle, department }: LevelResultProps) {
+export default function LevelResult({ result, jobTitle, department, jobDescription, onResultUpdate }: LevelResultProps) {
   const [aiInsights, setAiInsights] = useState<string | null>(null);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
   const [insightsError, setInsightsError] = useState<string | null>(null);
   const [companyCtx, setCompanyCtx] = useState<CompanyContext>({ companySize: "", companyStage: "", constraints: "" });
 
-  // Refinement state
+  // Refinement state for insights
   const [showRefine, setShowRefine] = useState(false);
   const [refineFeedback, setRefineFeedback] = useState("");
   const [isRefining, setIsRefining] = useState(false);
 
+  // Question answers state
+  const [questionAnswers, setQuestionAnswers] = useState<Record<number, string>>({});
+  const [additionalContext, setAdditionalContext] = useState("");
+  const [isRefiningLevel, setIsRefiningLevel] = useState(false);
+  const [refineError, setRefineError] = useState<string | null>(null);
+
   useEffect(() => {
     setCompanyCtx(getCompanyContext());
   }, []);
+
+  // Reset question answers when result changes
+  useEffect(() => {
+    setQuestionAnswers({});
+    setAdditionalContext("");
+    setRefineError(null);
+  }, [result]);
 
   const level = LEVELS.find(
     (l) => l.code.toLowerCase() === result.recommendedLevel.toLowerCase()
@@ -69,7 +84,7 @@ export default function LevelResult({ result, jobTitle, department }: LevelResul
       text += `\n${score.dimension} [${score.suggestedLevel}]\n`;
       text += `${score.rationale}\n`;
     }
-    if (result.questions.length > 0) {
+    if (result.questions && result.questions.length > 0) {
       text += `\nCLARIFYING QUESTIONS\n${"-".repeat(40)}\n`;
       result.questions.forEach((q, i) => {
         text += `${i + 1}. ${q}\n`;
@@ -160,8 +175,83 @@ export default function LevelResult({ result, jobTitle, department }: LevelResul
     }
   };
 
+  // Refine leveling based on question answers and/or additional context
+  const handleRefineLeveling = async () => {
+    const answeredQuestions = Object.entries(questionAnswers)
+      .filter(([, a]) => a.trim())
+      .map(([idx, a]) => ({
+        question: result.questions[parseInt(idx)],
+        answer: a.trim(),
+      }));
+
+    if (answeredQuestions.length === 0 && !additionalContext.trim()) return;
+
+    setIsRefiningLevel(true);
+    setRefineError(null);
+
+    try {
+      const response = await fetch("/api/level", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobTitle,
+          department,
+          jobDescription: jobDescription || "",
+          questionAnswers: answeredQuestions,
+          additionalContext: additionalContext.trim() || undefined,
+          companyContext: companyCtx,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to refine leveling");
+
+      const data = await response.json();
+      // Reset insights since the leveling changed
+      setAiInsights(null);
+      if (onResultUpdate) {
+        onResultUpdate(data);
+      }
+    } catch {
+      setRefineError("Could not refine the leveling. Please try again.");
+    } finally {
+      setIsRefiningLevel(false);
+    }
+  };
+
+  const hasAnyInput = Object.values(questionAnswers).some(a => a.trim()) || additionalContext.trim();
+
   return (
     <div className="space-y-4">
+      {/* Original Input — collapsible */}
+      {jobDescription && (
+        <details className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group">
+          <summary className="px-6 py-4 cursor-pointer flex items-center justify-between hover:bg-gray-50 transition-colors">
+            <span className="text-sm font-semibold text-gray-900">Your Input</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-180">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </summary>
+          <div className="px-6 pb-5 border-t border-gray-100 pt-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-medium text-gray-500">Job Description / Responsibilities</p>
+              <button
+                onClick={() => copyToClipboard(jobDescription)}
+                className="text-xs text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-1"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                Copy
+              </button>
+            </div>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 rounded-lg p-3 max-h-48 overflow-y-auto">
+              {jobDescription}
+            </p>
+          </div>
+        </details>
+      )}
+
       {/* Main Result Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div className="flex items-start justify-between mb-4">
@@ -234,25 +324,83 @@ export default function LevelResult({ result, jobTitle, department }: LevelResul
         </div>
       </div>
 
-      {/* Clarifying Questions */}
-      {result.questions.length > 0 && (
+      {/* Clarifying Questions — Interactive */}
+      {result.questions && result.questions.length > 0 && (
         <div className="bg-amber-50 rounded-xl border border-amber-200 p-6">
           <h3 className="text-sm font-semibold text-amber-900 mb-2">
             Questions to Refine the Leveling
           </h3>
-          <p className="text-xs text-amber-700 mb-3">
-            Answering these questions could help refine the level recommendation:
+          <p className="text-xs text-amber-700 mb-4">
+            Answer any of these to refine the level recommendation. None are mandatory — you can answer some, all, or add your own context below.
           </p>
-          <ul className="space-y-2">
+          <div className="space-y-4">
             {result.questions.map((q, i) => (
-              <li key={i} className="text-sm text-amber-800 flex gap-2">
-                <span className="text-amber-400 font-mono text-xs mt-0.5">
-                  {i + 1}.
-                </span>
-                {q}
-              </li>
+              <div key={i}>
+                <label className="text-sm text-amber-900 flex gap-2 mb-1.5">
+                  <span className="text-amber-500 font-mono text-xs mt-0.5 shrink-0">
+                    {i + 1}.
+                  </span>
+                  <span>{q}</span>
+                </label>
+                <textarea
+                  value={questionAnswers[i] || ""}
+                  onChange={(e) => setQuestionAnswers(prev => ({ ...prev, [i]: e.target.value }))}
+                  placeholder="Your answer (optional)"
+                  rows={2}
+                  className="w-full px-3 py-2 border border-amber-200 bg-white rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none resize-y"
+                />
+              </div>
             ))}
-          </ul>
+          </div>
+
+          {/* Additional context */}
+          <div className="mt-5 pt-4 border-t border-amber-200">
+            <label className="block text-sm font-medium text-amber-900 mb-1">
+              Additional context (optional)
+            </label>
+            <p className="text-xs text-amber-700 mb-2">
+              Paste any extra information — a more detailed JD, org chart context, or clarifications.
+            </p>
+            <textarea
+              value={additionalContext}
+              onChange={(e) => setAdditionalContext(e.target.value)}
+              placeholder="Any additional context to help refine the leveling..."
+              rows={3}
+              className="w-full px-3 py-2 border border-amber-200 bg-white rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none resize-y"
+            />
+          </div>
+
+          {refineError && (
+            <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+              {refineError}
+            </div>
+          )}
+
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={handleRefineLeveling}
+              disabled={isRefiningLevel || !hasAnyInput}
+              className="bg-[#0a0a0a] text-[#F5FF80] px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-[#1a1a1a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isRefiningLevel ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Re-analyzing...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="23 4 23 10 17 10" />
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                  </svg>
+                  Refine Leveling
+                </>
+              )}
+            </button>
+          </div>
         </div>
       )}
 

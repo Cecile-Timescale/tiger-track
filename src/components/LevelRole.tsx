@@ -195,7 +195,18 @@ export default function LevelRole({ userEmail }: LevelRoleProps) {
         </div>
       )}
 
-      {result && <LevelResult result={result} jobTitle={jobTitle} department={department} />}
+      {result && (
+        <LevelResult
+          result={result}
+          jobTitle={jobTitle}
+          department={department}
+          jobDescription={jobDescription}
+          onResultUpdate={(newResult) => {
+            setResult(newResult);
+            saveToHistory(newResult);
+          }}
+        />
+      )}
     </div>
   );
 }

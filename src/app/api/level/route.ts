@@ -3,7 +3,7 @@ import { getLevelGuideText } from "@/lib/levelGuide";
 
 export async function POST(req: NextRequest) {
   try {
-    const { jobTitle, department, jobDescription } = await req.json();
+    const { jobTitle, department, jobDescription, questionAnswers, additionalContext, companyContext } = await req.json();
 
     if (!jobDescription) {
       return NextResponse.json(
@@ -52,7 +52,13 @@ ANALYSIS APPROACH:
 8. First determine the TRACK (IC vs Manager vs Executive) based on whether the role manages people, then level within that track.
 
 IMPORTANT: Your dimension rationales should be SUBSTANTIVE (3-5 sentences each). Do NOT give generic one-liners. Reference specific aspects of the job description AND industry context for the role.
-
+${companyContext && (companyContext.companySize || companyContext.companyStage || companyContext.constraints) ? `
+COMPANY CONTEXT — factor this into your analysis:
+${companyContext.companySize ? `- Company size: ${companyContext.companySize}` : ""}
+${companyContext.companyStage ? `- Company stage: ${companyContext.companyStage}` : ""}
+${companyContext.constraints ? `- Constraints: ${companyContext.constraints}` : ""}
+Consider the company context when assessing scope and impact. A role at a 170-person startup may have broader scope than the same title at a large enterprise.
+` : ""}
 Respond in valid JSON with this exact structure:
 {
   "recommendedLevel": "<level code>",
@@ -90,13 +96,28 @@ Respond in valid JSON with this exact structure:
 
 ONLY respond with the JSON object, no other text.`;
 
+    // Build question answers block if this is a refinement
+    let qaBlock = "";
+    if (questionAnswers && questionAnswers.length > 0) {
+      qaBlock = "\n\nCLARIFYING ANSWERS (use these to refine your leveling — the user answered questions from a previous analysis):\n";
+      for (const qa of questionAnswers) {
+        qaBlock += `Q: ${qa.question}\nA: ${qa.answer}\n\n`;
+      }
+      qaBlock += "IMPORTANT: Use these answers to make a MORE ACCURATE leveling decision. The answers may confirm or change the initial level recommendation. Re-evaluate all dimensions in light of this new information.\n";
+    }
+
+    let additionalBlock = "";
+    if (additionalContext) {
+      additionalBlock = `\n\nADDITIONAL CONTEXT PROVIDED BY USER:\n${additionalContext}\n\nUse this additional context alongside the job description to make a more accurate leveling decision.\n`;
+    }
+
     const userMessage = `Please analyze and level the following role:
 
 ${jobTitle ? `Job Title: ${jobTitle}` : ""}
 ${department ? `Department: ${department}` : ""}
 
 Job Description / Responsibilities:
-${jobDescription}`;
+${jobDescription}${qaBlock}${additionalBlock}`;
 
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
