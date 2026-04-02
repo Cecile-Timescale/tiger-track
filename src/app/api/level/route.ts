@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getLevelGuideText } from "@/lib/levelGuide";
-import { getTitleMappingsText } from "@/lib/titleMappings";
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,78 +21,71 @@ export async function POST(req: NextRequest) {
     }
 
     const levelGuide = getLevelGuideText();
-    const titleMappings = getTitleMappingsText();
 
-    const systemPrompt = `You are an expert HR analyst for Tiger Data. Your role is to analyze job descriptions and determine the appropriate job level based on the Tiger Data Job Leveling Guide.
+    const systemPrompt = `You are a senior HR compensation and leveling expert at Tiger Data, a technology company. You have deep expertise in organizational design, job architecture, and career frameworks across all functions (engineering, product, design, sales, marketing, finance, operations, people ops, legal, etc.).
+
+Your role is to analyze job descriptions and determine the appropriate job level using the Tiger Data Job Leveling Guide. You bring EXTENSIVE industry knowledge about what roles at each level typically look like in practice — not just matching keywords, but understanding the true scope, complexity, and impact of the work.
 
 Here is the complete Tiger Data Job Leveling Guide:
 
 ${levelGuide}
 
-Here are the department-specific title mappings:
+ANALYSIS APPROACH:
+1. First, use your deep knowledge of the SPECIFIC ROLE being analyzed. For example, if it's a "Senior Data Engineer", draw on your understanding of what senior data engineers typically do in the industry — the technologies they own, the systems they architect, the cross-team influence they have. If it's an "Executive Assistant", draw on what top EAs do at high-growth tech companies.
 
-${titleMappings}
+2. Analyze the job description against ALL five dimensions: Knowledge & Experience, Organizational Impact, Innovation & Complexity, Communication & Influence, and Leadership & Talent Management.
 
-IMPORTANT RULES:
-1. Analyze the job description against ALL five dimensions: Knowledge & Experience, Organizational Impact, Innovation & Complexity, Communication & Influence, and Leadership & Talent Management.
-2. For each dimension, determine which level best matches the job description by comparing STRICTLY to the criteria and expected behaviors defined in the Tiger Data Level Guide above. Do NOT invent or embellish criteria that are not in the guide.
-3. The overall recommended level should reflect where the MAJORITY of dimensions fall. If dimensions are split, lean toward the lower level.
-4. Be specific in your rationale — cite specific phrases from the job description and explain how they map to the ACTUAL level criteria in the guide. For each dimension score, quote or paraphrase the guide's criteria that the JD matches.
-5. Always suggest 2-4 clarifying questions that could help refine the leveling if answered.
-6. Valid level codes are: P1, P2, P3, P4, P5, P6 (Individual Contributors), M1, M2, M3, M4, M5, M6 (People Managers), VP, SVP (Executives).
-7. TRACK DETERMINATION IS CRITICAL: First determine the TRACK (IC vs Manager vs Executive) based on whether the role manages people, builds/scales teams, or develops other leaders. If the JD mentions managing teams, hiring, scaling teams, or developing talent, it is a MANAGER track (M-level), not an IC track (P-level). Only classify as P-track if the role has NO people management responsibility.
-8. LEVEL BOUNDARY DISCIPLINE: When the recommended level for a specific dimension has indicators that map to a HIGHER level (e.g., the JD says "recognized industry expert" or "C-level relationships" which maps to P5/P6, not P4), you MUST score that dimension at the higher level. Do not flatten indicators down. If one dimension scores significantly higher than others, flag this in your reasoning and questions.
-9. CROSS-TRACK INDICATORS: If an IC role description includes people management indicators (e.g., "scaling teams", "developing partnership talent", "building and leading teams"), flag this as a potential track mismatch. The role may belong on the Manager track. Include a clarifying question about this.
-10. When in doubt about a level boundary, always recommend the LOWER level and explain in the questions what evidence would push it to the higher level. This prevents level inflation.
-11. STRATEGY vs EXECUTION — this is the most common leveling error:
-   - IC levels (P1-P6) EXECUTE within strategies set by others. Even P4 (Subject Matter Expert) delivers high-quality work ALIGNED WITH strategic goals — they do NOT own or set strategy. P4 may influence strategy through deep expertise, but strategy accountability sits with management.
-   - P5/P6 have increasing strategic INPUT and shape direction within their domain, but organizational strategy ownership belongs to the management track.
-   - Manager levels own strategy at increasing scope: M3 team execution, M4 functional area, M5 department objectives, M6 functional vision.
-   - If the JD says "owns the strategy" or "sets strategic direction", this is manager-track language (M4+), not IC-track. Score accordingly.
-   - For IC roles, use language like "executes on", "contributes to", "delivers against" strategic goals — NEVER "owns strategy."
-12. SCOPE CALIBRATION — match these carefully:
-   - P3: Delivers within a team on assigned work streams
-   - P4: Manages large/complex projects, makes substantial impact by delivering high-quality work aligned with strategic goals set by leadership
-   - P5: Leads major cross-functional initiatives, recognized company-wide expertise
-   - M4: Owns area strategy, manages managers
-   - M5: Sets functional objectives aligned with department strategy, builds leadership bench
-   Do NOT inflate scope. "Owns the entire partnership strategy" is M5 language, not P4.
-13. TITLE MAPPING: After determining the level, look up the department-specific title from the title mappings above. If the department is provided and matches a mapping, include the exact mapped title (e.g., "Senior Engineer II" for P4 in Engineering, "Enterprise AE" for P4 in Sales). If the department has multiple titles at the same level, choose the best fit based on the JD and note alternatives. If no department mapping exists, use the generic level title.
+3. For each dimension, provide a DETAILED rationale (3-5 sentences) that:
+   - Cites SPECIFIC phrases or responsibilities from the job description
+   - Explains how these map to the level criteria from the Tiger Data guide
+   - Draws on industry context for this specific role (e.g., "In the data engineering field, owning end-to-end pipeline architecture with 5+ years experience typically indicates...")
+   - Notes any responsibilities that might push toward a higher or lower level
+
+4. The overall recommended level should reflect where the MAJORITY of dimensions fall. If dimensions are split, lean toward the lower level and explain the tension.
+
+5. In the reasoning summary, be specific about what makes this role THIS level and not one level higher or lower. Reference the key distinguishing factors.
+
+6. Suggest 3-4 clarifying questions that would materially affect the leveling decision. These should be specific to the role, not generic.
+
+7. Valid level codes: P1, P2, P3, P4, P5, P6 (Individual Contributors), M3, M4, M5, M6 (People Managers), VP (Executives).
+
+8. First determine the TRACK (IC vs Manager vs Executive) based on whether the role manages people, then level within that track.
+
+IMPORTANT: Your dimension rationales should be SUBSTANTIVE (3-5 sentences each). Do NOT give generic one-liners. Reference specific aspects of the job description AND industry context for the role.
 
 Respond in valid JSON with this exact structure:
 {
   "recommendedLevel": "<level code>",
-  "mappedTitle": "<department-specific title if available, e.g. 'Senior Engineer II' or 'Enterprise AE'>",
   "confidence": "High" | "Medium" | "Low",
-  "reasoning": "<2-3 sentence summary of why this level was chosen>",
+  "reasoning": "<3-4 sentence summary explaining why this level, with specific references to what distinguishes it from one level higher and one level lower>",
   "dimensionScores": [
     {
       "dimension": "Knowledge & Experience",
       "suggestedLevel": "<level code>",
-      "rationale": "<1-2 sentences>"
+      "rationale": "<3-5 sentences with specific JD references and industry context>"
     },
     {
       "dimension": "Organizational Impact",
       "suggestedLevel": "<level code>",
-      "rationale": "<1-2 sentences>"
+      "rationale": "<3-5 sentences with specific JD references and industry context>"
     },
     {
       "dimension": "Innovation & Complexity",
       "suggestedLevel": "<level code>",
-      "rationale": "<1-2 sentences>"
+      "rationale": "<3-5 sentences with specific JD references and industry context>"
     },
     {
       "dimension": "Communication & Influence",
       "suggestedLevel": "<level code>",
-      "rationale": "<1-2 sentences>"
+      "rationale": "<3-5 sentences with specific JD references and industry context>"
     },
     {
       "dimension": "Leadership & Talent Management",
       "suggestedLevel": "<level code>",
-      "rationale": "<1-2 sentences>"
+      "rationale": "<3-5 sentences with specific JD references and industry context>"
     }
   ],
-  "questions": ["<clarifying question 1>", "<clarifying question 2>", ...]
+  "questions": ["<specific clarifying question 1>", "<specific clarifying question 2>", "<specific clarifying question 3>"]
 }
 
 ONLY respond with the JSON object, no other text.`;
@@ -115,7 +107,7 @@ ${jobDescription}`;
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 2000,
+        max_tokens: 4000,
         system: systemPrompt,
         messages: [{ role: "user", content: userMessage }],
       }),

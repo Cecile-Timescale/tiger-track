@@ -114,7 +114,7 @@ export default function LevelRole({ userEmail }: LevelRoleProps) {
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
               placeholder="e.g. Senior Data Engineer"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none"
             />
           </div>
           <div>
@@ -126,7 +126,7 @@ export default function LevelRole({ userEmail }: LevelRoleProps) {
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
               placeholder="e.g. Engineering, Data Platform"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none"
             />
           </div>
         </div>
@@ -140,7 +140,7 @@ export default function LevelRole({ userEmail }: LevelRoleProps) {
             onChange={(e) => setJobDescription(e.target.value)}
             placeholder="Paste the full job description or list the key responsibilities, qualifications, and expectations for this role..."
             rows={10}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-y"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none resize-y"
           />
         </div>
 
@@ -193,7 +193,7 @@ export default function LevelRole({ userEmail }: LevelRoleProps) {
         </div>
       )}
 
-      {result && <LevelResult result={result} jobTitle={jobTitle} />}
+      {result && <LevelResult result={result} jobTitle={jobTitle} department={department} />}
     </div>
   );
 }
