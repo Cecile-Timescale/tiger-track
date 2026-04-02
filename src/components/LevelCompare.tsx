@@ -9,6 +9,8 @@ import {
   type Level,
   type TrackType,
 } from "@/lib/levelGuide";
+import { copyToClipboard, exportToPDF } from "@/lib/exportUtils";
+import ExportBar from "@/components/ExportBar";
 
 const DIMENSION_KEYS = [
   "knowledgeExperience",
@@ -39,6 +41,78 @@ export default function LevelCompare() {
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [comparedFor, setComparedFor] = useState<string>("");
+
+  // Build text for clipboard
+  const buildComparisonText = () => {
+    if (!leftLevel || !rightLevel) return "";
+    let text = `TIGER DATA — LEVEL COMPARISON\n`;
+    text += `${"═".repeat(50)}\n\n`;
+    if (jobTitle) text += `Role: ${jobTitle}\n`;
+    if (department) text += `Department: ${department}\n`;
+    text += `Comparing: ${leftLevel.code} (${leftLevel.title}) vs ${rightLevel.code} (${rightLevel.title})\n\n`;
+
+    for (const key of DIMENSION_KEYS) {
+      const label = DIMENSION_LABELS[key];
+      text += `${label}\n${"-".repeat(40)}\n`;
+      text += `${leftLevel.code}:\n  Criteria: ${leftLevel.dimensions[key].criteria}\n  Behaviors: ${leftLevel.dimensions[key].expectedBehaviors}\n`;
+      text += `${rightLevel.code}:\n  Criteria: ${rightLevel.dimensions[key].criteria}\n  Behaviors: ${rightLevel.dimensions[key].expectedBehaviors}\n`;
+      if (aiComparison?.dimensions[key]) {
+        text += `AI Analysis: ${aiComparison.dimensions[key]}\n`;
+      }
+      text += `\n`;
+    }
+
+    if (aiComparison?.summary) {
+      text += `OVERALL SUMMARY\n${"-".repeat(40)}\n${aiComparison.summary}\n`;
+    }
+    return text;
+  };
+
+  const handleCopy = async () => copyToClipboard(buildComparisonText());
+
+  const handleExportPDF = () => {
+    if (!leftLevel || !rightLevel) return;
+
+    const sections: { heading?: string; subheading?: string; body?: string; spacerAfter?: number }[] = [];
+
+    // Header info
+    if (jobTitle) {
+      sections.push({ body: `Role: ${jobTitle}${department ? ` | Department: ${department}` : ""}` });
+    }
+    sections.push({
+      body: `Comparing ${leftLevel.code} (${leftLevel.title}) vs ${rightLevel.code} (${rightLevel.title})`,
+      spacerAfter: 4,
+    });
+
+    // Per-dimension comparison
+    for (const key of DIMENSION_KEYS) {
+      sections.push({ heading: DIMENSION_LABELS[key] });
+      sections.push({
+        subheading: `${leftLevel.code} — ${leftLevel.title}`,
+        body: `Criteria: ${leftLevel.dimensions[key].criteria}\nExpected Behaviors: ${leftLevel.dimensions[key].expectedBehaviors}`,
+      });
+      sections.push({
+        subheading: `${rightLevel.code} — ${rightLevel.title}`,
+        body: `Criteria: ${rightLevel.dimensions[key].criteria}\nExpected Behaviors: ${rightLevel.dimensions[key].expectedBehaviors}`,
+      });
+      if (aiComparison?.dimensions[key]) {
+        sections.push({
+          subheading: "AI Analysis",
+          body: aiComparison.dimensions[key],
+        });
+      }
+      sections.push({ spacerAfter: 4 });
+    }
+
+    if (aiComparison?.summary) {
+      sections.push({ heading: "Overall Summary", body: aiComparison.summary });
+    }
+
+    const title = `Level Comparison: ${leftLevel.code} vs ${rightLevel.code}`;
+    const subtitle = jobTitle ? `${jobTitle}${department ? ` — ${department}` : ""}` : "";
+    const slug = `${leftLevel.code}-vs-${rightLevel.code}${jobTitle ? `-${jobTitle.replace(/\s+/g, "-").toLowerCase()}` : ""}`;
+    exportToPDF(title, subtitle, sections, `tiger-track-compare-${slug}.pdf`);
+  };
 
   const leftLevel = LEVELS.find(
     (l) => l.code.toLowerCase() === leftCode.toLowerCase()
@@ -374,6 +448,15 @@ export default function LevelCompare() {
                   </div>
                 </div>
               )}
+
+              {/* Export bar — shown when both levels selected */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <ExportBar
+                  onCopy={handleCopy}
+                  onExportPDF={handleExportPDF}
+                  copyLabel="Copy Comparison"
+                />
+              </div>
             </>
           )}
         </>
