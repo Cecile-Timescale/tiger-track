@@ -3,32 +3,27 @@
 import { useState, useEffect } from "react";
 import { LEVELS } from "@/lib/levelGuide";
 import { copyToClipboard, exportToPDF } from "@/lib/exportUtils";
-import { getCompanyContext, buildCompanyContextPrompt, CompanyContext } from "@/lib/companyContext";
+import { getCompanyContext, CompanyContext } from "@/lib/companyContext";
 import ExportBar from "@/components/ExportBar";
 import CompanyContextBanner from "@/components/CompanyContextBanner";
 
-interface GapItem {
-  dimension: string;
-  status: "Gap" | "On Track" | "Strength";
-  currentState: string;
-  targetState: string;
-  actions: string[];
+interface RoleRequirement {
+  requirement: string;
+  deliveryOutcome: string;
 }
 
-interface QuarterPlan {
-  quarter: string;
-  theme: string;
-  goals: string[];
-  deliverables: string[];
-  successCriteria: string;
+interface WeeklyCheckpoint {
+  week: string;
+  focus: string;
+  checkIn: string;
 }
 
 interface PerformancePlan {
-  summary: string;
-  gapAnalysis: GapItem[];
-  developmentPlan: QuarterPlan[];
-  keyMetrics: string[];
-  managerActions: string[];
+  deliveryIssues: string;
+  roleRequirements: RoleRequirement[];
+  levelContext: string;
+  weeklyCheckpoints: WeeklyCheckpoint[];
+  consequenceStatement: string;
 }
 
 export default function PerformanceImprovement() {
@@ -39,6 +34,7 @@ export default function PerformanceImprovement() {
   const [targetLevel, setTargetLevel] = useState("");
   const [gapDescription, setGapDescription] = useState("");
   const [strengths, setStrengths] = useState("");
+  const [participants, setParticipants] = useState("");
 
   const [plan, setPlan] = useState<PerformancePlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -55,6 +51,17 @@ export default function PerformanceImprovement() {
   }, []);
 
   const levelCodes = LEVELS.map((l) => l.code);
+
+  // Calculate end date (4 weeks from today)
+  const getEndDate = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 28);
+    return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  };
+
+  const getTodayDate = () => {
+    return new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+  };
 
   const handleGenerate = async () => {
     if (!employeeName || !currentRole || !currentLevel || !targetLevel || !gapDescription.trim()) {
@@ -79,6 +86,7 @@ export default function PerformanceImprovement() {
           gapDescription,
           strengths,
           companyContext: companyCtx,
+          participants,
         }),
       });
 
@@ -123,44 +131,41 @@ export default function PerformanceImprovement() {
 
   const buildPlainText = () => {
     if (!plan) return "";
-    let text = `TIGER DATA — PERFORMANCE IMPROVEMENT PLAN\n`;
-    text += `${"═".repeat(55)}\n\n`;
+    let text = `${employeeName} — Performance Improvement Plan\n`;
+    text += `${"═".repeat(60)}\n`;
+    text += `Date: ${getTodayDate()}\n\n`;
+    if (participants) text += `Participants: ${participants}\n\n`;
     text += `Employee: ${employeeName}\n`;
     text += `Role: ${currentRole}\n`;
     if (department) text += `Department: ${department}\n`;
-    text += `Current Level: ${currentLevel} → Target Level: ${targetLevel}\n\n`;
-    text += `SUMMARY\n${"-".repeat(40)}\n${plan.summary}\n\n`;
+    text += `Current Level: ${currentLevel}  |  Target Level: ${targetLevel}\n`;
+    text += `Duration: 4 weeks (until ${getEndDate()})\n\n`;
 
-    text += `GAP ANALYSIS\n${"-".repeat(40)}\n`;
-    for (const gap of plan.gapAnalysis) {
-      text += `\n${gap.dimension} [${gap.status}]\n`;
-      text += `  Current: ${gap.currentState}\n`;
-      text += `  Target: ${gap.targetState}\n`;
-      if (gap.actions.length > 0) {
-        text += `  Actions:\n`;
-        gap.actions.forEach((a) => (text += `    - ${a}\n`));
+    if (plan.levelContext) {
+      text += `LEVEL CONTEXT\n${"-".repeat(50)}\n${plan.levelContext}\n\n`;
+    }
+
+    text += `DELIVERY ISSUES\n${"-".repeat(50)}\n${plan.deliveryIssues}\n\n`;
+
+    text += `EXPECTATIONS & DELIVERY OUTCOMES\n${"-".repeat(50)}\n`;
+    for (const req of plan.roleRequirements) {
+      text += `\nImprovement: ${req.requirement}\n`;
+      text += `Delivery Outcome: ${req.deliveryOutcome}\n`;
+    }
+
+    if (plan.weeklyCheckpoints && plan.weeklyCheckpoints.length > 0) {
+      text += `\nWEEKLY CHECKPOINTS\n${"-".repeat(50)}\n`;
+      for (const w of plan.weeklyCheckpoints) {
+        text += `\n${w.week}\n`;
+        text += `  Focus: ${w.focus}\n`;
+        text += `  Check-in: ${w.checkIn}\n`;
       }
     }
 
-    text += `\nDEVELOPMENT PLAN\n${"-".repeat(40)}\n`;
-    for (const q of plan.developmentPlan) {
-      text += `\n${q.quarter} — ${q.theme}\n`;
-      text += `  Goals:\n`;
-      q.goals.forEach((g) => (text += `    - ${g}\n`));
-      text += `  Deliverables:\n`;
-      q.deliverables.forEach((d) => (text += `    - ${d}\n`));
-      text += `  Success Criteria: ${q.successCriteria}\n`;
-    }
-
-    if (plan.keyMetrics.length > 0) {
-      text += `\nKEY METRICS\n${"-".repeat(40)}\n`;
-      plan.keyMetrics.forEach((m) => (text += `  - ${m}\n`));
-    }
-
-    if (plan.managerActions.length > 0) {
-      text += `\nMANAGER SUPPORT ACTIONS\n${"-".repeat(40)}\n`;
-      plan.managerActions.forEach((a) => (text += `  - ${a}\n`));
-    }
+    text += `\n${"-".repeat(50)}\n`;
+    text += plan.consequenceStatement || "Failure to meet the expectations and deliverables outlined in this performance improvement plan may result in further disciplinary actions, up to and including termination.";
+    text += `\n\n\n____________________ \t\t ________________\n`;
+    text += `${employeeName} \t\t\t\t Date\n`;
 
     return text;
   };
@@ -172,45 +177,46 @@ export default function PerformanceImprovement() {
 
     const sections: { heading?: string; subheading?: string; body?: string; spacerAfter?: number }[] = [];
 
+    // Header info
     sections.push({
-      body: `Employee: ${employeeName}\nRole: ${currentRole}${department ? ` | ${department}` : ""}\nCurrent Level: ${currentLevel}  →  Target Level: ${targetLevel}`,
-      spacerAfter: 2,
+      body: `Date: ${getTodayDate()}${participants ? `\nParticipants: ${participants}` : ""}\n\nEmployee: ${employeeName}\nRole: ${currentRole}${department ? ` | ${department}` : ""}\nCurrent Level: ${currentLevel}  →  Target Level: ${targetLevel}\nDuration: 4 weeks (until ${getEndDate()})`,
+      spacerAfter: 4,
     });
 
-    sections.push({ heading: "Summary", body: plan.summary, spacerAfter: 4 });
+    if (plan.levelContext) {
+      sections.push({ heading: "Level Context", body: plan.levelContext, spacerAfter: 4 });
+    }
 
-    sections.push({ heading: "Gap Analysis" });
-    for (const gap of plan.gapAnalysis) {
-      const statusTag = gap.status === "Gap" ? "⚠ GAP" : gap.status === "Strength" ? "✓ STRENGTH" : "● ON TRACK";
+    sections.push({ heading: "Delivery Issues", body: plan.deliveryIssues, spacerAfter: 4 });
+
+    sections.push({ heading: "Expectations & Delivery Outcomes" });
+    for (const req of plan.roleRequirements) {
       sections.push({
-        subheading: `${gap.dimension} — ${statusTag}`,
-        body: `Current: ${gap.currentState}\nTarget: ${gap.targetState}${gap.actions.length > 0 ? `\nActions: ${gap.actions.join("; ")}` : ""}`,
+        subheading: req.requirement,
+        body: req.deliveryOutcome,
       });
     }
     sections.push({ spacerAfter: 4 });
 
-    sections.push({ heading: "Development Plan" });
-    for (const q of plan.developmentPlan) {
-      sections.push({
-        subheading: `${q.quarter} — ${q.theme}`,
-        body: `Goals: ${q.goals.join("; ")}\nDeliverables: ${q.deliverables.join("; ")}\nSuccess Criteria: ${q.successCriteria}`,
-      });
-    }
-    sections.push({ spacerAfter: 4 });
-
-    if (plan.keyMetrics.length > 0) {
-      sections.push({
-        heading: "Key Metrics",
-        body: plan.keyMetrics.join("\n"),
-      });
+    if (plan.weeklyCheckpoints && plan.weeklyCheckpoints.length > 0) {
+      sections.push({ heading: "Weekly Checkpoints" });
+      for (const w of plan.weeklyCheckpoints) {
+        sections.push({
+          subheading: w.week,
+          body: `Focus: ${w.focus}\nCheck-in: ${w.checkIn}`,
+        });
+      }
+      sections.push({ spacerAfter: 4 });
     }
 
-    if (plan.managerActions.length > 0) {
-      sections.push({
-        heading: "Manager Support Actions",
-        body: plan.managerActions.join("\n"),
-      });
-    }
+    sections.push({
+      body: plan.consequenceStatement || "Failure to meet the expectations and deliverables outlined in this performance improvement plan may result in further disciplinary actions, up to and including termination.",
+      spacerAfter: 8,
+    });
+
+    sections.push({
+      body: `____________________\t\t\t________________\n${employeeName}\t\t\t\t\tDate`,
+    });
 
     const slug = employeeName.replace(/\s+/g, "-").toLowerCase();
     exportToPDF(
@@ -219,12 +225,6 @@ export default function PerformanceImprovement() {
       sections,
       `tiger-track-pip-${slug}.pdf`
     );
-  };
-
-  const statusColor = (status: string) => {
-    if (status === "Gap") return "bg-red-100 text-red-700 border-red-200";
-    if (status === "Strength") return "bg-green-100 text-green-700 border-green-200";
-    return "bg-blue-100 text-blue-700 border-blue-200";
   };
 
   return (
@@ -237,9 +237,8 @@ export default function PerformanceImprovement() {
               Performance Improvement Plan
             </h2>
             <p className="text-sm text-gray-500 mb-6">
-              Describe the gaps you see and our AI will create a role-specific
-              improvement plan using the Tiger Data leveling framework and deep
-              knowledge of the role.
+              Describe the performance gaps and the AI will generate a focused 4-week PIP
+              with specific delivery outcomes tied to the Tiger Data leveling framework.
             </p>
 
             {error && (
@@ -320,20 +319,34 @@ export default function PerformanceImprovement() {
               </div>
             </div>
 
+            {/* Participants — optional */}
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Participants (optional)
+              </label>
+              <input
+                type="text"
+                value={participants}
+                onChange={(e) => setParticipants(e.target.value)}
+                placeholder="People involved in the PIP meeting"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none"
+              />
+            </div>
+
             {/* Gap description — the key input */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Where are the gaps?
+                What are the performance gaps?
               </label>
               <p className="text-xs text-gray-400 mb-2">
-                Describe in your own words what this person needs to improve.
-                Be as specific as possible — the AI will map your observations
-                to the leveling dimensions and build a tailored plan.
+                Describe the delivery issues and gaps in your own words.
+                The AI will map these to the leveling framework and generate
+                specific delivery outcomes for a 4-week improvement period.
               </p>
               <textarea
                 value={gapDescription}
                 onChange={(e) => setGapDescription(e.target.value)}
-                placeholder="Describe what this person needs to improve on..."
+                placeholder="Describe the performance issues and what this person needs to improve on..."
                 rows={6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none resize-y"
               />
@@ -364,7 +377,7 @@ export default function PerformanceImprovement() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Generating role-specific improvement plan...
+                  Generating 4-week improvement plan...
                 </>
               ) : (
                 <>
@@ -373,23 +386,23 @@ export default function PerformanceImprovement() {
                     <path d="M2 17l10 5 10-5" />
                     <path d="M2 12l10 5 10-5" />
                   </svg>
-                  Generate AI Performance Improvement Plan
+                  Generate Performance Improvement Plan
                 </>
               )}
             </button>
           </div>
         </div>
       ) : (
-        /* Results View */
+        /* Results View — PIP Format */
         <div className="space-y-6">
           {/* Header */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">{employeeName}</h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  {currentRole}{department ? ` — ${department}` : ""}
-                </p>
+                <h2 className="text-xl font-bold text-gray-900">
+                  {employeeName} — Performance Improvement Plan
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">{getTodayDate()}</p>
               </div>
               <button
                 onClick={() => setPlan(null)}
@@ -398,137 +411,152 @@ export default function PerformanceImprovement() {
                 Edit
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-4 mb-4">
+
+            {participants && (
+              <div className="mb-4">
+                <p className="text-xs font-medium text-gray-500 mb-1">Participants</p>
+                <p className="text-sm text-gray-700">{participants}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
               <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-500">Current Level</p>
-                <p className="text-sm font-semibold text-gray-900">{currentLevel}</p>
+                <p className="text-xs text-gray-500">Role</p>
+                <p className="text-sm font-semibold text-gray-900">{currentRole}</p>
+              </div>
+              {department && (
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">Department</p>
+                  <p className="text-sm font-semibold text-gray-900">{department}</p>
+                </div>
+              )}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <p className="text-xs text-gray-500">Current → Target</p>
+                <p className="text-sm font-semibold text-gray-900">{currentLevel} → {targetLevel}</p>
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-xs text-gray-500">Target Level</p>
-                <p className="text-sm font-semibold text-gray-900">{targetLevel}</p>
+                <p className="text-xs text-gray-500">Duration</p>
+                <p className="text-sm font-semibold text-gray-900">4 weeks</p>
+                <p className="text-xs text-gray-400">Until {getEndDate()}</p>
               </div>
             </div>
-            <div className="bg-[#0a0a0a] rounded-lg p-4">
-              <p className="text-sm text-gray-300 leading-relaxed">{plan.summary}</p>
-            </div>
+
+            {/* Level Context */}
+            {plan.levelContext && (
+              <div className="bg-[#0a0a0a] rounded-lg p-4 mb-4">
+                <p className="text-xs font-medium text-[#F5FF80] mb-1">Level Context</p>
+                <p className="text-sm text-gray-300 leading-relaxed">{plan.levelContext}</p>
+              </div>
+            )}
           </div>
 
-          {/* Gap Analysis */}
+          {/* Your Input — collapsible */}
+          <details className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden group">
+            <summary className="px-6 py-4 cursor-pointer flex items-center justify-between hover:bg-gray-50 transition-colors">
+              <span className="text-sm font-semibold text-gray-900">Your Input</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-open:rotate-180">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </summary>
+            <div className="px-6 pb-5 border-t border-gray-100 pt-4 space-y-3">
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-0.5">Performance gaps described</p>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{gapDescription}</p>
+              </div>
+              {strengths && (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-0.5">Known strengths</p>
+                  <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{strengths}</p>
+                </div>
+              )}
+            </div>
+          </details>
+
+          {/* Delivery Issues */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Gap Analysis</h3>
-            <div className="space-y-4">
-              {plan.gapAnalysis.map((gap, idx) => (
-                <div key={idx} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-gray-900">{gap.dimension}</span>
-                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${statusColor(gap.status)}`}>
-                      {gap.status}
-                    </span>
+            <h3 className="text-sm font-semibold text-gray-900 mb-1">Delivery Issues</h3>
+            <p className="text-sm text-gray-700 leading-relaxed">{plan.deliveryIssues}</p>
+          </div>
+
+          {/* Improvements → Delivery Outcomes Table */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-[#0a0a0a] px-6 py-3">
+              <h3 className="text-sm font-semibold text-[#F5FF80]">
+                Expectations over the next 4 weeks, until {getEndDate()}
+              </h3>
+            </div>
+            <div className="divide-y divide-gray-200">
+              {/* Table header */}
+              <div className="grid grid-cols-2 gap-0">
+                <div className="px-6 py-3 bg-gray-50 border-r border-gray-200">
+                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">Improvements</p>
+                </div>
+                <div className="px-6 py-3 bg-gray-50">
+                  <p className="text-xs font-bold text-gray-700 uppercase tracking-wide">Delivery Outcomes</p>
+                </div>
+              </div>
+              {/* Table rows */}
+              {plan.roleRequirements.map((req, idx) => (
+                <div key={idx} className="grid grid-cols-2 gap-0">
+                  <div className="px-6 py-4 border-r border-gray-200">
+                    <p className="text-sm font-semibold text-gray-900 leading-relaxed">
+                      {req.requirement}
+                    </p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-xs font-medium text-gray-500 mb-1">Current State</p>
-                      <p className="text-sm text-gray-700">{gap.currentState}</p>
-                    </div>
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-xs font-medium text-gray-500 mb-1">Target State</p>
-                      <p className="text-sm text-gray-700">{gap.targetState}</p>
-                    </div>
+                  <div className="px-6 py-4">
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      {req.deliveryOutcome}
+                    </p>
                   </div>
-                  {gap.actions.length > 0 && (
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 mb-1">Recommended Actions</p>
-                      <ul className="space-y-1">
-                        {gap.actions.map((action, i) => (
-                          <li key={i} className="text-sm text-gray-600 flex gap-2">
-                            <span className="text-[#F5FF80] font-bold mt-0.5">→</span>
-                            <span>{action}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Development Plan */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Development Plan</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {plan.developmentPlan.map((q, idx) => (
-                <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-8 h-8 rounded-full bg-[#0a0a0a] text-[#F5FF80] flex items-center justify-center text-xs font-bold">
-                      {q.quarter}
+          {/* Weekly Checkpoints */}
+          {plan.weeklyCheckpoints && plan.weeklyCheckpoints.length > 0 && (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Weekly Checkpoints</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {plan.weeklyCheckpoints.map((w, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-[#0a0a0a] text-[#F5FF80] flex items-center justify-center text-xs font-bold">
+                        {idx + 1}
+                      </div>
+                      <h4 className="font-semibold text-gray-900 text-sm">{w.week}</h4>
                     </div>
-                    <h4 className="font-semibold text-gray-900 text-sm">{q.theme}</h4>
-                  </div>
-
-                  <div className="space-y-3 mt-3 text-sm">
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700 mb-1">Goals</p>
-                      <ul className="space-y-1">
-                        {q.goals.map((g, i) => (
-                          <li key={i} className="text-gray-600 flex gap-2">
-                            <span className="text-[#F5FF80] font-bold">•</span>
-                            <span>{g}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700 mb-1">Deliverables</p>
-                      <ul className="space-y-1">
-                        {q.deliverables.map((d, i) => (
-                          <li key={i} className="text-gray-600 flex gap-2">
-                            <span className="text-green-500 font-bold">✓</span>
-                            <span>{d}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="bg-white rounded p-2 border border-gray-200">
-                      <p className="text-xs text-gray-500">
-                        <span className="font-medium">Success looks like:</span> {q.successCriteria}
-                      </p>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-0.5">Focus</p>
+                        <p className="text-gray-600">{w.focus}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-700 mb-0.5">Manager Check-in</p>
+                        <p className="text-gray-600">{w.checkIn}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Key Metrics + Manager Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {plan.keyMetrics.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Key Metrics to Track</h3>
-                <ul className="space-y-2">
-                  {plan.keyMetrics.map((m, i) => (
-                    <li key={i} className="text-sm text-gray-600 flex gap-2">
-                      <span className="text-[#0a0a0a] font-mono text-xs mt-0.5">{i + 1}.</span>
-                      <span>{m}</span>
-                    </li>
-                  ))}
-                </ul>
+          {/* Consequence Statement */}
+          <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {plan.consequenceStatement || "Failure to meet the expectations and deliverables outlined in this performance improvement plan may result in further disciplinary actions, up to and including termination."}
+            </p>
+            <div className="mt-8 grid grid-cols-2 gap-12">
+              <div>
+                <div className="border-b border-gray-400 w-48 mb-1" />
+                <p className="text-sm text-gray-600">{employeeName}</p>
               </div>
-            )}
-
-            {plan.managerActions.length > 0 && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Manager Support Actions</h3>
-                <ul className="space-y-2">
-                  {plan.managerActions.map((a, i) => (
-                    <li key={i} className="text-sm text-gray-600 flex gap-2">
-                      <span className="text-[#F5FF80] font-bold">→</span>
-                      <span>{a}</span>
-                    </li>
-                  ))}
-                </ul>
+              <div>
+                <div className="border-b border-gray-400 w-32 mb-1" />
+                <p className="text-sm text-gray-600">Date</p>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Refine Section */}
@@ -550,7 +578,7 @@ export default function PerformanceImprovement() {
                   Refine this plan
                 </h3>
                 <p className="text-xs text-gray-500 mb-3">
-                  Tell the AI what doesn&apos;t work for your company and it will adapt the recommendations.
+                  Tell the AI what doesn&apos;t work and it will adapt the recommendations.
                 </p>
                 <textarea
                   value={refineFeedback}
@@ -588,11 +616,17 @@ export default function PerformanceImprovement() {
             )}
           </div>
 
+          {error && (
+            <div className="bg-red-50 rounded-xl border border-red-200 p-4">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
           {/* Fixed Export Bar */}
           <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] px-6 py-3 z-50">
             <div className="max-w-4xl mx-auto flex items-center justify-between">
               <span className="text-xs text-gray-500 font-medium">
-                {employeeName} — <span className="text-gray-900">{currentLevel} → {targetLevel}</span>
+                {employeeName} — <span className="text-gray-900">4-week PIP ({currentLevel} → {targetLevel})</span>
               </span>
               <ExportBar
                 onCopy={handleCopy}
