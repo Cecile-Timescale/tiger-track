@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import LevelResult from "@/components/LevelResult";
+import CompanyContextBanner from "@/components/CompanyContextBanner";
 
 interface LevelingResult {
   recommendedLevel: string;
@@ -95,6 +96,7 @@ export default function LevelRole({ userEmail }: LevelRoleProps) {
 
   return (
     <div className="space-y-6">
+      <CompanyContextBanner />
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-1">
           Level a Role

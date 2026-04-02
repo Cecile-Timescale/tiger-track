@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LEVELS } from "@/lib/levelGuide";
 import { copyToClipboard, exportToPDF } from "@/lib/exportUtils";
+import { getCompanyContext, buildCompanyContextPrompt, CompanyContext } from "@/lib/companyContext";
 import ExportBar from "@/components/ExportBar";
+import CompanyContextBanner from "@/components/CompanyContextBanner";
 
 interface GapItem {
   dimension: string;
@@ -41,6 +43,16 @@ export default function PerformanceImprovement() {
   const [plan, setPlan] = useState<PerformancePlan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [companyCtx, setCompanyCtx] = useState<CompanyContext>({ companySize: "", companyStage: "", constraints: "" });
+
+  // Refinement state
+  const [showRefine, setShowRefine] = useState(false);
+  const [refineFeedback, setRefineFeedback] = useState("");
+  const [isRefining, setIsRefining] = useState(false);
+
+  useEffect(() => {
+    setCompanyCtx(getCompanyContext());
+  }, []);
 
   const levelCodes = LEVELS.map((l) => l.code);
 
@@ -66,6 +78,7 @@ export default function PerformanceImprovement() {
           targetLevel,
           gapDescription,
           strengths,
+          companyContext: companyCtx,
         }),
       });
 
@@ -77,6 +90,34 @@ export default function PerformanceImprovement() {
       setError("Could not generate performance plan. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRefine = async () => {
+    if (!plan || !refineFeedback.trim()) return;
+    setIsRefining(true);
+    try {
+      const response = await fetch("/api/refine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          originalResult: plan,
+          refinementFeedback: refineFeedback,
+          companyContext: companyCtx,
+          contextType: "performance-plan",
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to refine plan");
+
+      const data = await response.json();
+      setPlan(data.refined);
+      setRefineFeedback("");
+      setShowRefine(false);
+    } catch {
+      setError("Could not refine the plan. Please try again.");
+    } finally {
+      setIsRefining(false);
     }
   };
 
@@ -190,6 +231,7 @@ export default function PerformanceImprovement() {
     <div className="space-y-6 pb-16">
       {!plan ? (
         <div className="space-y-6">
+          <CompanyContextBanner onContextChange={(ctx) => setCompanyCtx(ctx)} />
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-1">
               Performance Improvement Plan
@@ -485,6 +527,63 @@ export default function PerformanceImprovement() {
                     </li>
                   ))}
                 </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Refine Section */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            {!showRefine ? (
+              <button
+                onClick={() => setShowRefine(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+                Refine this plan — something doesn&apos;t fit our setup
+              </button>
+            ) : (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                  Refine this plan
+                </h3>
+                <p className="text-xs text-gray-500 mb-3">
+                  Tell the AI what doesn&apos;t work for your company and it will adapt the recommendations.
+                </p>
+                <textarea
+                  value={refineFeedback}
+                  onChange={(e) => setRefineFeedback(e.target.value)}
+                  placeholder="What needs to change?"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none resize-y mb-3"
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    onClick={() => { setShowRefine(false); setRefineFeedback(""); }}
+                    className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleRefine}
+                    disabled={isRefining || !refineFeedback.trim()}
+                    className="px-4 py-2 bg-[#0a0a0a] text-[#F5FF80] text-sm font-medium rounded-lg hover:bg-[#1a1a1a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isRefining ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Refining...
+                      </>
+                    ) : (
+                      "Refine Plan"
+                    )}
+                  </button>
+                </div>
               </div>
             )}
           </div>

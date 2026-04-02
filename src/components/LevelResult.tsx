@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LEVELS, DIMENSION_LABELS, getTrackLabel } from "@/lib/levelGuide";
 import { copyToClipboard, exportExecutiveSummaryPDF } from "@/lib/exportUtils";
+import { getCompanyContext, CompanyContext } from "@/lib/companyContext";
 import ExportBar from "@/components/ExportBar";
 
 interface LevelingResult {
@@ -27,6 +28,16 @@ export default function LevelResult({ result, jobTitle, department }: LevelResul
   const [aiInsights, setAiInsights] = useState<string | null>(null);
   const [isLoadingInsights, setIsLoadingInsights] = useState(false);
   const [insightsError, setInsightsError] = useState<string | null>(null);
+  const [companyCtx, setCompanyCtx] = useState<CompanyContext>({ companySize: "", companyStage: "", constraints: "" });
+
+  // Refinement state
+  const [showRefine, setShowRefine] = useState(false);
+  const [refineFeedback, setRefineFeedback] = useState("");
+  const [isRefining, setIsRefining] = useState(false);
+
+  useEffect(() => {
+    setCompanyCtx(getCompanyContext());
+  }, []);
 
   const level = LEVELS.find(
     (l) => l.code.toLowerCase() === result.recommendedLevel.toLowerCase()
@@ -108,6 +119,7 @@ export default function LevelResult({ result, jobTitle, department }: LevelResul
           track: level ? getTrackLabel(level.track) : "",
           reasoning: result.reasoning,
           dimensionScores: result.dimensionScores,
+          companyContext: companyCtx,
         }),
       });
 
@@ -119,6 +131,32 @@ export default function LevelResult({ result, jobTitle, department }: LevelResul
       setInsightsError("Could not generate AI insights. Please try again.");
     } finally {
       setIsLoadingInsights(false);
+    }
+  };
+
+  const handleRefineInsights = async () => {
+    if (!aiInsights || !refineFeedback.trim()) return;
+    setIsRefining(true);
+    try {
+      const response = await fetch("/api/refine", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          originalResult: aiInsights,
+          refinementFeedback: refineFeedback,
+          companyContext: companyCtx,
+          contextType: "insights",
+        }),
+      });
+      if (!response.ok) throw new Error("Failed to refine insights");
+      const data = await response.json();
+      setAiInsights(data.refined);
+      setRefineFeedback("");
+      setShowRefine(false);
+    } catch {
+      setInsightsError("Could not refine the analysis. Please try again.");
+    } finally {
+      setIsRefining(false);
     }
   };
 
@@ -281,6 +319,60 @@ export default function LevelResult({ result, jobTitle, department }: LevelResul
                   .replace(/^- (.*$)/gm, '<div class="flex gap-2 ml-2"><span class="text-gray-400">•</span><span>$1</span></div>')
               }}
             />
+
+            {/* Refine section */}
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              {!showRefine ? (
+                <button
+                  onClick={() => setShowRefine(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                  Refine — something doesn&apos;t fit our setup
+                </button>
+              ) : (
+                <div>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Tell the AI what doesn&apos;t work for your company and it will adapt.
+                  </p>
+                  <textarea
+                    value={refineFeedback}
+                    onChange={(e) => setRefineFeedback(e.target.value)}
+                    placeholder="What needs to change?"
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none resize-y mb-3"
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      onClick={() => { setShowRefine(false); setRefineFeedback(""); }}
+                      className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleRefineInsights}
+                      disabled={isRefining || !refineFeedback.trim()}
+                      className="px-4 py-1.5 bg-[#0a0a0a] text-[#F5FF80] text-sm font-medium rounded-lg hover:bg-[#1a1a1a] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isRefining ? (
+                        <>
+                          <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          Refining...
+                        </>
+                      ) : (
+                        "Refine Analysis"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

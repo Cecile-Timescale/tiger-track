@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
       targetLevel,
       gapDescription,
       strengths,
+      companyContext,
     } = await req.json();
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -23,7 +24,24 @@ export async function POST(req: NextRequest) {
 
     const levelGuide = getLevelGuideText();
 
+    // Build company context block
+    let companyBlock = "";
+    if (companyContext && (companyContext.companySize || companyContext.companyStage || companyContext.constraints)) {
+      companyBlock = "\n\nIMPORTANT — COMPANY CONTEXT (adapt ALL recommendations to this reality):\n";
+      companyBlock += "Tiger Data is NOT a large enterprise. Your recommendations MUST be realistic and actionable within this company's actual structure.\n";
+      if (companyContext.companySize) companyBlock += `- Company size: ${companyContext.companySize}\n`;
+      if (companyContext.companyStage) companyBlock += `- Company stage: ${companyContext.companyStage}\n`;
+      if (companyContext.constraints) companyBlock += `- Specific constraints & context: ${companyContext.constraints}\n`;
+      companyBlock += `\nBecause of the above:\n`;
+      companyBlock += `- Do NOT recommend shadowing executives, senior leaders, or specialized teams that likely don't exist at this size.\n`;
+      companyBlock += `- Do NOT assume formal mentorship programs, learning & development budgets, leadership academies, or executive coaching programs exist.\n`;
+      companyBlock += `- DO recommend scrappy, practical actions: learning from peers, taking on stretch projects, finding external mentors/communities, self-directed learning, cross-functional collaboration within the existing team.\n`;
+      companyBlock += `- DO consider that people at a startup wear multiple hats and may have more direct access to leadership than at a large company.\n`;
+      companyBlock += `- Tailor every recommendation to what's ACTUALLY possible at a company of this size and stage.\n`;
+    }
+
     const systemPrompt = `You are a senior HR business partner and performance coach at Tiger Data, a technology company. You specialize in creating actionable, role-specific performance improvement plans that help employees close skill gaps and reach their target level.
+${companyBlock}
 
 Here is the Tiger Data Job Leveling Guide:
 

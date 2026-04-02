@@ -11,6 +11,7 @@ export async function POST(req: NextRequest) {
       track,
       reasoning,
       dimensionScores,
+      companyContext,
     } = await req.json();
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -35,6 +36,22 @@ export async function POST(req: NextRequest) {
         `${d.dimension}: ${d.suggestedLevel} — ${d.rationale}`
       )
       .join("\n");
+
+    // Build company context block
+    let companyBlock = "";
+    if (companyContext && (companyContext.companySize || companyContext.companyStage || companyContext.constraints)) {
+      companyBlock = "\n\nIMPORTANT — COMPANY CONTEXT (adapt ALL recommendations to this reality):\n";
+      companyBlock += "Tiger Data is NOT a large enterprise. Your recommendations MUST be realistic and actionable within this company's actual structure.\n";
+      if (companyContext.companySize) companyBlock += `- Company size: ${companyContext.companySize}\n`;
+      if (companyContext.companyStage) companyBlock += `- Company stage: ${companyContext.companyStage}\n`;
+      if (companyContext.constraints) companyBlock += `- Specific constraints & context: ${companyContext.constraints}\n`;
+      companyBlock += `\nBecause of the above:\n`;
+      companyBlock += `- Do NOT recommend shadowing executives, senior leaders, or specialized teams that likely don't exist at this size.\n`;
+      companyBlock += `- Do NOT assume formal mentorship programs, L&D budgets, leadership academies, or executive coaching programs exist.\n`;
+      companyBlock += `- DO recommend practical actions: learning from peers, stretch projects, external mentors/communities, self-directed learning, cross-functional collaboration.\n`;
+      companyBlock += `- DO consider that people at a startup wear multiple hats and have more direct access to leadership.\n`;
+      companyBlock += `- Tailor every recommendation to what's ACTUALLY possible at a company of this size and stage.\n`;
+    }
 
     const systemPrompt = `You are a senior HR business partner and career development expert at Tiger Data. You have deep expertise in:
 - Career architecture and job leveling across all functions
@@ -62,6 +79,7 @@ CRITICAL INSTRUCTIONS:
 3. End with 4-6 "Practical Development Actions" that are HIGHLY SPECIFIC to this role and function.
 
 4. The analysis should feel like it was written by someone who deeply understands the role, not someone reading from a generic framework.
+${companyBlock}
 
 FORMAT: Write in clean markdown with ## and ### headers. Use bullet points for actionable items. Keep the total response between 800-1200 words. Be specific and substantive — no filler.`;
 
