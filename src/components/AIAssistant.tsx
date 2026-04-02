@@ -1,14 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import type { JobContext, LevelingResult } from "@/app/page";
-import { LEVELS, getTrackLabel } from "@/lib/levelGuide";
-import {
-  copyToClipboard,
-  exportExecutiveSummaryPDF,
-  exportToPDF,
-} from "@/lib/exportUtils";
-import ExportBar from "@/components/ExportBar";
 
 interface Message {
   role: "user" | "assistant";
@@ -16,32 +8,11 @@ interface Message {
 }
 
 interface AIAssistantProps {
-  jobContext: JobContext;
-  levelingResult: LevelingResult | null;
+  messages: Message[];
+  onMessagesChange: (messages: Message[]) => void;
 }
 
-export default function AIAssistant({
-  jobContext,
-  levelingResult,
-}: AIAssistantProps) {
-  const hasContext =
-    jobContext.jobTitle.trim() || jobContext.jobDescription.trim();
-
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content:
-        "Hi! I'm the Tiger Data Leveling Assistant. I can help you with:\n\n" +
-        "• **Leveling questions** — Ask about what distinguishes one level from another\n" +
-        "• **Role analysis** — Describe a role and I'll help determine the right level\n" +
-        "• **Requirements guidance** — Ask what's needed for a specific level (e.g., \"What does a P4 need to demonstrate?\")\n" +
-        "• **Career progression** — Understand what it takes to move from one level to the next\n\n" +
-        (hasContext
-          ? `I can see you're working on a role${jobContext.jobTitle ? ` for **${jobContext.jobTitle}**` : ""}. Feel free to ask me about it!\n\n`
-          : "") +
-        "How can I help you today?",
-    },
-  ]);
+export default function AIAssistant({ messages, onMessagesChange }: AIAssistantProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -50,68 +21,36 @@ export default function AIAssistant({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const buildContextPrefix = () => {
-    if (!hasContext) return "";
-    let ctx = "\n\n[CONTEXT FROM LEVEL A ROLE TAB]\n";
-    if (jobContext.jobTitle) ctx += `Job Title: ${jobContext.jobTitle}\n`;
-    if (jobContext.department)
-      ctx += `Department: ${jobContext.department}\n`;
-    if (jobContext.jobDescription)
-      ctx += `Job Description:\n${jobContext.jobDescription}\n`;
-
-    const answers = Object.entries(jobContext.levelingAnswers).filter(
-      ([, v]) => v.trim()
-    );
-    if (answers.length > 0) {
-      ctx += "\nLeveling Guidance Answers:\n";
-      const labels: Record<string, string> = {
-        impact: "Business Impact",
-        complexity: "Ambiguity & Complexity",
-        influence: "Influence Required",
-        ownership: "Ownership & Autonomy",
-        leadership: "Leadership Responsibility",
-      };
-      for (const [key, value] of answers) {
-        ctx += `${labels[key] || key}: ${value}\n`;
-      }
-    }
-    ctx += "[END CONTEXT]\n\n";
-    return ctx;
-  };
-
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
     const userMessage = input.trim();
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+    const updatedMessages = [...messages, { role: "user" as const, content: userMessage }];
+    onMessagesChange(updatedMessages);
     setIsLoading(true);
 
     try {
-      const contextPrefix = buildContextPrefix();
-      const messagesForApi = [
-        ...messages.filter(
-          (m) => m.role !== "assistant" || messages.indexOf(m) > 0
-        ),
-        { role: "user", content: contextPrefix + userMessage },
-      ];
-
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: messagesForApi }),
+        body: JSON.stringify({
+          messages: updatedMessages
+            .filter((m, idx) => m.role !== "assistant" || idx > 0)
+            .map((m) => ({ role: m.role, content: m.content })),
+        }),
       });
 
       if (!response.ok) throw new Error("Failed to get response");
 
       const data = await response.json();
-      setMessages((prev) => [
-        ...prev,
+      onMessagesChange([
+        ...updatedMessages,
         { role: "assistant", content: data.response },
       ]);
     } catch {
-      setMessages((prev) => [
-        ...prev,
+      onMessagesChange([
+        ...updatedMessages,
         {
           role: "assistant",
           content:
@@ -130,127 +69,16 @@ export default function AIAssistant({
     }
   };
 
-  const handleExportPDF = () => {
-    // Strip markdown bold from AI messages
-    const cleanContent = (text: string) =>
-      text.replace(/\*\*(.*?)\*\*/g, "$1").replace(/#{1,3}\s*/g, "");
-
-    // Get AI conversation insights (skip welcome message)
-    const conversationMessages = messages.slice(1);
-    const aiResponses = conversationMessages
-      .filter((m) => m.role === "assistant")
-      .map((m) => cleanContent(m.content));
-
-    // If we have a leveling result, build a merged executive summary
-    if (levelingResult) {
-      const level = LEVELS.find(
-        (l) =>
-          l.code.toLowerCase() === levelingResult.recommendedLevel.toLowerCase()
-      );
-
-      // Build AI insights summary — combine the key points from conversation
-      const aiInsights = aiResponses.length > 0
-        ? aiResponses.join("\n\n")
-        : "";
-
-      exportExecutiveSummaryPDF({
-        jobTitle: jobContext.jobTitle || "Untitled Role",
-        recommendedLevel: levelingResult.recommendedLevel,
-        levelTitle: level?.title || "",
-        track: level ? getTrackLabel(level.track) : "N/A",
-        confidence: levelingResult.confidence,
-        reasoning: levelingResult.reasoning,
-        dimensionScores: levelingResult.dimensionScores,
-        aiInsights,
-      });
-    } else {
-      // No leveling result — export AI conversation as standalone exec summary
-      const sections: {
-        heading?: string;
-        subheading?: string;
-        body?: string;
-        spacerAfter?: number;
-      }[] = [];
-
-      // Build a summary from the conversation
-      if (aiResponses.length > 0) {
-        sections.push({
-          heading: "AI Assistant Analysis",
-          spacerAfter: 2,
-        });
-        conversationMessages.forEach((m) => {
-          sections.push({
-            subheading: m.role === "user" ? "Question" : "Analysis",
-            body: cleanContent(m.content),
-            spacerAfter: 4,
-          });
-        });
-      }
-
-      const title = jobContext.jobTitle
-        ? `Leveling Discussion: ${jobContext.jobTitle}`
-        : "AI Leveling Discussion";
-
-      exportToPDF(
-        title,
-        `${aiResponses.length} response${aiResponses.length !== 1 ? "s" : ""} • ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`,
-        sections,
-        `tiger-track-discussion-${Date.now()}.pdf`
-      );
-    }
-  };
-
-  const suggestedQuestions = hasContext
-    ? [
-        `What level would ${jobContext.jobTitle || "this role"} be?`,
-        "What's missing from this JD to determine the level?",
-        "How does this compare to one level higher?",
-        "What should I clarify with the hiring manager?",
-      ]
-    : [
-        "What distinguishes a P3 from a P4?",
-        "What does a M5 Director need to demonstrate?",
-        "How is VP different from Senior Director?",
-        "What level would a team lead with 5 years experience be?",
-      ];
+  const suggestedQuestions = [
+    "What distinguishes a P3 from a P4?",
+    "What does a M5 Director need to demonstrate?",
+    "How is VP different from Senior Director?",
+    "Help me assess value-fit for a Bar Raiser interview",
+    "What level would a team lead with 5 years experience be?",
+  ];
 
   return (
-    <div
-      className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col"
-      style={{ height: "calc(100vh - 200px)", minHeight: "500px" }}
-    >
-      {/* Context banner */}
-      {hasContext && (
-        <div className="px-4 pt-3 pb-1">
-          <div className="flex items-center gap-2 text-xs bg-[#F5FF80]/30 text-[#1A1A1A] px-3 py-2 rounded-lg border border-[#F5FF80]/50">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="12" cy="12" r="10" />
-              <path d="M12 16v-4" />
-              <path d="M12 8h.01" />
-            </svg>
-            Referencing{" "}
-            <strong>{jobContext.jobTitle || "job description"}</strong> from the
-            Level a Role tab
-            {levelingResult && (
-              <span className="ml-1 text-gray-500">
-                • Leveled at{" "}
-                <strong className="text-[#1A1A1A]">
-                  {levelingResult.recommendedLevel}
-                </strong>
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col" style={{ height: "calc(100vh - 200px)", minHeight: "500px" }}>
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, i) => (
@@ -261,7 +89,7 @@ export default function AIAssistant({
             <div
               className={`max-w-[80%] rounded-xl px-4 py-3 text-sm ${
                 msg.role === "user"
-                  ? "bg-[#1A1A1A] text-white"
+                  ? "bg-[#1a365d] text-white"
                   : "bg-gray-100 text-gray-800"
               }`}
             >
@@ -284,18 +112,9 @@ export default function AIAssistant({
           <div className="chat-message flex justify-start">
             <div className="bg-gray-100 rounded-xl px-4 py-3 text-sm text-gray-500">
               <div className="flex items-center gap-1">
-                <div
-                  className="w-2 h-2 bg-[#FF5B29] rounded-full animate-bounce"
-                  style={{ animationDelay: "0ms" }}
-                />
-                <div
-                  className="w-2 h-2 bg-[#FF5B29] rounded-full animate-bounce"
-                  style={{ animationDelay: "150ms" }}
-                />
-                <div
-                  className="w-2 h-2 bg-[#FF5B29] rounded-full animate-bounce"
-                  style={{ animationDelay: "300ms" }}
-                />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
               </div>
             </div>
           </div>
@@ -314,7 +133,7 @@ export default function AIAssistant({
                 onClick={() => {
                   setInput(q);
                 }}
-                className="text-xs bg-[#F5FF80]/30 text-[#1A1A1A] px-3 py-1.5 rounded-full hover:bg-[#F5FF80]/60 transition-colors border border-[#F5FF80]/50"
+                className="text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full hover:bg-blue-100 transition-colors"
               >
                 {q}
               </button>
@@ -323,63 +142,24 @@ export default function AIAssistant({
         </div>
       )}
 
-      {/* Input area with export bar */}
-      <div className="border-t border-gray-200">
-        {/* Export bar - visible when there are user messages */}
-        {messages.length > 1 && (
-          <div className="px-4 pt-3 pb-1 flex items-center justify-between bg-gray-50/80">
-            <span className="text-xs text-gray-400">
-              {messages.filter((m) => m.role === "assistant").length - 1}{" "}
-              response
-              {messages.filter((m) => m.role === "assistant").length - 1 !== 1
-                ? "s"
-                : ""}
-              {levelingResult && (
-                <span className="ml-1 text-gray-500">
-                  • PDF will include Level a Role analysis
-                </span>
-              )}
-            </span>
-            <ExportBar
-              onCopy={() => {
-                const lastAssistant = [...messages]
-                  .reverse()
-                  .find((m) => m.role === "assistant");
-                return copyToClipboard(lastAssistant?.content || "");
-              }}
-              onCopyAll={() => {
-                const text = messages
-                  .map(
-                    (m) =>
-                      `${m.role === "user" ? "You" : "Tiger Track AI"}:\n${m.content}`
-                  )
-                  .join("\n\n---\n\n");
-                return copyToClipboard(text);
-              }}
-              onExportPDF={handleExportPDF}
-              copyLabel="Copy Last"
-              copyAllLabel="Copy All"
-            />
-          </div>
-        )}
-        <div className="p-4 pt-2">
-          <div className="flex gap-2">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about job leveling..."
-              rows={1}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#F5FF80] focus:border-[#1A1A1A] outline-none resize-none"
-            />
-            <button
-              onClick={handleSend}
-              disabled={!input.trim() || isLoading}
-              className="bg-[#1A1A1A] text-[#F5FF80] px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#2A2A2A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Send
-            </button>
-          </div>
+      {/* Input */}
+      <div className="border-t border-gray-200 p-4">
+        <div className="flex gap-2">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask about job leveling, career progression, or bar raiser assessments..."
+            rows={1}
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+          />
+          <button
+            onClick={handleSend}
+            disabled={!input.trim() || isLoading}
+            className="bg-[#1a365d] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#2a4a7f] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Send
+          </button>
         </div>
       </div>
     </div>
