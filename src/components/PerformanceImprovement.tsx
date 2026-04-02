@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { LEVELS } from "@/lib/levelGuide";
-import { copyToClipboard, exportToPDF } from "@/lib/exportUtils";
+import { copyToClipboard, exportPIPtoPDF } from "@/lib/exportUtils";
 import { getCompanyContext, CompanyContext } from "@/lib/companyContext";
 import ExportBar from "@/components/ExportBar";
 import CompanyContextBanner from "@/components/CompanyContextBanner";
@@ -138,7 +138,7 @@ export default function PerformanceImprovement() {
     text += `Employee: ${employeeName}\n`;
     text += `Role: ${currentRole}\n`;
     if (department) text += `Department: ${department}\n`;
-    text += `Current Level: ${currentLevel}  |  Target Level: ${targetLevel}\n`;
+    text += `Current Level: ${currentLevel}  ->  Target Level: ${targetLevel}\n`;
     text += `Duration: 4 weeks (until ${getEndDate()})\n\n`;
 
     if (plan.levelContext) {
@@ -174,57 +174,21 @@ export default function PerformanceImprovement() {
 
   const handleExportPDF = () => {
     if (!plan) return;
-
-    const sections: { heading?: string; subheading?: string; body?: string; spacerAfter?: number }[] = [];
-
-    // Header info
-    sections.push({
-      body: `Date: ${getTodayDate()}${participants ? `\nParticipants: ${participants}` : ""}\n\nEmployee: ${employeeName}\nRole: ${currentRole}${department ? ` | ${department}` : ""}\nCurrent Level: ${currentLevel}  →  Target Level: ${targetLevel}\nDuration: 4 weeks (until ${getEndDate()})`,
-      spacerAfter: 4,
+    exportPIPtoPDF({
+      employeeName,
+      currentRole,
+      department,
+      currentLevel,
+      targetLevel,
+      participants,
+      todayDate: getTodayDate(),
+      endDate: getEndDate(),
+      levelContext: plan.levelContext,
+      deliveryIssues: plan.deliveryIssues,
+      roleRequirements: plan.roleRequirements,
+      weeklyCheckpoints: plan.weeklyCheckpoints,
+      consequenceStatement: plan.consequenceStatement || "Failure to meet the expectations and deliverables outlined in this performance improvement plan may result in further disciplinary actions, up to and including termination.",
     });
-
-    if (plan.levelContext) {
-      sections.push({ heading: "Level Context", body: plan.levelContext, spacerAfter: 4 });
-    }
-
-    sections.push({ heading: "Delivery Issues", body: plan.deliveryIssues, spacerAfter: 4 });
-
-    sections.push({ heading: "Expectations & Delivery Outcomes" });
-    for (const req of plan.roleRequirements) {
-      sections.push({
-        subheading: req.requirement,
-        body: req.deliveryOutcome,
-      });
-    }
-    sections.push({ spacerAfter: 4 });
-
-    if (plan.weeklyCheckpoints && plan.weeklyCheckpoints.length > 0) {
-      sections.push({ heading: "Weekly Checkpoints" });
-      for (const w of plan.weeklyCheckpoints) {
-        sections.push({
-          subheading: w.week,
-          body: `Focus: ${w.focus}\nCheck-in: ${w.checkIn}`,
-        });
-      }
-      sections.push({ spacerAfter: 4 });
-    }
-
-    sections.push({
-      body: plan.consequenceStatement || "Failure to meet the expectations and deliverables outlined in this performance improvement plan may result in further disciplinary actions, up to and including termination.",
-      spacerAfter: 8,
-    });
-
-    sections.push({
-      body: `____________________\t\t\t________________\n${employeeName}\t\t\t\t\tDate`,
-    });
-
-    const slug = employeeName.replace(/\s+/g, "-").toLowerCase();
-    exportToPDF(
-      "Performance Improvement Plan",
-      `${employeeName} — ${currentRole} (${currentLevel} → ${targetLevel})`,
-      sections,
-      `tiger-track-pip-${slug}.pdf`
-    );
   };
 
   return (

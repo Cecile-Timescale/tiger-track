@@ -406,3 +406,318 @@ export function exportExecutiveSummaryPDF(data: ExecutiveSummaryData) {
   const slug = data.jobTitle.replace(/\s+/g, "-").toLowerCase();
   doc.save(`tiger-track-summary-${slug}.pdf`);
 }
+
+// ── PIP-specific PDF export ──
+
+interface PIPRoleRequirement {
+  requirement: string;
+  deliveryOutcome: string;
+}
+
+interface PIPWeeklyCheckpoint {
+  week: string;
+  focus: string;
+  checkIn: string;
+}
+
+interface PIPExportData {
+  employeeName: string;
+  currentRole: string;
+  department?: string;
+  currentLevel: string;
+  targetLevel: string;
+  participants?: string;
+  todayDate: string;
+  endDate: string;
+  levelContext?: string;
+  deliveryIssues: string;
+  roleRequirements: PIPRoleRequirement[];
+  weeklyCheckpoints?: PIPWeeklyCheckpoint[];
+  consequenceStatement: string;
+}
+
+/**
+ * Safe text helper — replaces characters not supported in jsPDF default fonts
+ */
+function safeText(text: string): string {
+  return text
+    .replace(/→/g, "->")
+    .replace(/←/g, "<-")
+    .replace(/↔/g, "<->")
+    .replace(/—/g, "-")
+    .replace(/–/g, "-")
+    .replace(/'/g, "'")
+    .replace(/'/g, "'")
+    .replace(/"/g, '"')
+    .replace(/"/g, '"')
+    .replace(/…/g, "...")
+    .replace(/•/g, "-")
+    .replace(/≥/g, ">=")
+    .replace(/≤/g, "<=")
+    .replace(/©/g, "(c)")
+    .replace(/®/g, "(R)")
+    .replace(/™/g, "(TM)");
+}
+
+export function exportPIPtoPDF(data: PIPExportData) {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 18;
+  const contentWidth = pageWidth - margin * 2;
+  let y = 0;
+
+  const checkPageBreak = (needed: number) => {
+    if (y + needed > pageHeight - 22) {
+      doc.addPage();
+      y = margin;
+    }
+  };
+
+  // ─── Dark header band ───
+  doc.setFillColor(26, 26, 26);
+  doc.rect(0, 0, pageWidth, 28, "F");
+  doc.setFontSize(16);
+  doc.setTextColor(245, 255, 128);
+  doc.setFont("helvetica", "bold");
+  doc.text("Tiger Track", margin, 12);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.text("Job Leveling by Tiger Data", margin, 18);
+
+  // ─── Title ───
+  y = 38;
+  doc.setFontSize(14);
+  doc.setTextColor(26, 26, 26);
+  doc.setFont("helvetica", "bold");
+  doc.text("Performance Improvement Plan", margin, y);
+  y += 8;
+
+  // Employee subtitle
+  doc.setFontSize(10);
+  doc.setTextColor(80, 80, 80);
+  doc.setFont("helvetica", "normal");
+  doc.text(safeText(`${data.employeeName} - ${data.currentRole} (${data.currentLevel} -> ${data.targetLevel})`), margin, y);
+  y += 4;
+
+  // Yellow divider
+  doc.setDrawColor(245, 255, 128);
+  doc.setLineWidth(0.8);
+  doc.line(margin, y, pageWidth - margin, y);
+  y += 8;
+
+  // ─── Info block ───
+  doc.setFontSize(9);
+  doc.setTextColor(60, 60, 60);
+  doc.setFont("helvetica", "normal");
+
+  doc.text(`Date: ${data.todayDate}`, margin, y);
+  y += 4.5;
+  if (data.participants) {
+    const partLines = doc.splitTextToSize(`Participants: ${data.participants}`, contentWidth);
+    for (const line of partLines) { doc.text(safeText(line), margin, y); y += 4.5; }
+  }
+  y += 2;
+  doc.text(`Employee: ${data.employeeName}`, margin, y); y += 4.5;
+  doc.text(safeText(`Role: ${data.currentRole}${data.department ? ` | ${data.department}` : ""}`), margin, y); y += 4.5;
+  doc.text(safeText(`Current Level: ${data.currentLevel}    Target Level: ${data.targetLevel}`), margin, y); y += 4.5;
+  doc.text(`Duration: 4 weeks (until ${data.endDate})`, margin, y); y += 8;
+
+  // ─── Level Context ───
+  if (data.levelContext) {
+    checkPageBreak(16);
+    doc.setFontSize(11);
+    doc.setTextColor(26, 26, 26);
+    doc.setFont("helvetica", "bold");
+    doc.text("Level Context", margin, y); y += 6;
+
+    doc.setFontSize(9);
+    doc.setTextColor(60, 60, 60);
+    doc.setFont("helvetica", "normal");
+    const lcLines = doc.splitTextToSize(safeText(data.levelContext), contentWidth);
+    for (const line of lcLines) {
+      checkPageBreak(5);
+      doc.text(line, margin, y); y += 4.2;
+    }
+    y += 6;
+  }
+
+  // ─── Delivery Issues ───
+  checkPageBreak(16);
+  doc.setFontSize(11);
+  doc.setTextColor(26, 26, 26);
+  doc.setFont("helvetica", "bold");
+  doc.text("Delivery Issues", margin, y); y += 6;
+
+  doc.setFontSize(9);
+  doc.setTextColor(60, 60, 60);
+  doc.setFont("helvetica", "normal");
+  const diLines = doc.splitTextToSize(safeText(data.deliveryIssues), contentWidth);
+  for (const line of diLines) {
+    checkPageBreak(5);
+    doc.text(line, margin, y); y += 4.2;
+  }
+  y += 8;
+
+  // ─── Expectations Table ───
+  checkPageBreak(20);
+  doc.setFontSize(11);
+  doc.setTextColor(26, 26, 26);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Expectations over the next 4 weeks, until ${data.endDate}`, margin, y);
+  y += 8;
+
+  // Table dimensions
+  const colSplit = contentWidth * 0.42; // 42% for Improvements, 58% for Delivery Outcomes
+  const col1X = margin;
+  const col2X = margin + colSplit;
+  const col1Width = colSplit - 4;  // inner padding
+  const col2Width = contentWidth - colSplit - 4;
+  const cellPadX = 3;
+  const cellPadY = 3;
+
+  // Table header row
+  doc.setFillColor(240, 240, 240);
+  doc.rect(margin, y - 4, contentWidth, 8, "F");
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.3);
+  doc.line(col2X, y - 4, col2X, y + 4);
+  doc.setFontSize(8);
+  doc.setTextColor(60, 60, 60);
+  doc.setFont("helvetica", "bold");
+  doc.text("IMPROVEMENTS", col1X + cellPadX, y);
+  doc.text("DELIVERY OUTCOMES", col2X + cellPadX, y);
+  y += 7;
+
+  // Table rows
+  for (const req of data.roleRequirements) {
+    // Calculate row height
+    doc.setFontSize(8.5);
+    doc.setFont("helvetica", "bold");
+    const reqLines = doc.splitTextToSize(safeText(req.requirement), col1Width);
+    doc.setFont("helvetica", "normal");
+    const outcomeLines = doc.splitTextToSize(safeText(req.deliveryOutcome), col2Width);
+
+    const reqHeight = reqLines.length * 4 + cellPadY * 2;
+    const outcomeHeight = outcomeLines.length * 4 + cellPadY * 2;
+    const rowHeight = Math.max(reqHeight, outcomeHeight);
+
+    checkPageBreak(rowHeight + 2);
+
+    // Row border top
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.2);
+    doc.line(margin, y, margin + contentWidth, y);
+
+    // Column divider
+    doc.setDrawColor(220, 220, 220);
+    doc.line(col2X, y, col2X, y + rowHeight);
+
+    // Improvement text (bold)
+    doc.setFontSize(8.5);
+    doc.setTextColor(26, 26, 26);
+    doc.setFont("helvetica", "bold");
+    let textY = y + cellPadY + 1;
+    for (const line of reqLines) {
+      doc.text(line, col1X + cellPadX, textY);
+      textY += 4;
+    }
+
+    // Delivery outcome text (normal)
+    doc.setFontSize(8.5);
+    doc.setTextColor(60, 60, 60);
+    doc.setFont("helvetica", "normal");
+    textY = y + cellPadY + 1;
+    for (const line of outcomeLines) {
+      doc.text(line, col2X + cellPadX, textY);
+      textY += 4;
+    }
+
+    y += rowHeight;
+  }
+
+  // Bottom border of table
+  doc.setDrawColor(220, 220, 220);
+  doc.setLineWidth(0.2);
+  doc.line(margin, y, margin + contentWidth, y);
+  y += 10;
+
+  // ─── Weekly Checkpoints ───
+  if (data.weeklyCheckpoints && data.weeklyCheckpoints.length > 0) {
+    checkPageBreak(16);
+    doc.setFontSize(11);
+    doc.setTextColor(26, 26, 26);
+    doc.setFont("helvetica", "bold");
+    doc.text("Weekly Checkpoints", margin, y); y += 7;
+
+    for (const w of data.weeklyCheckpoints) {
+      checkPageBreak(20);
+      // Week header
+      doc.setFontSize(9);
+      doc.setTextColor(255, 91, 41);
+      doc.setFont("helvetica", "bold");
+      doc.text(safeText(w.week), margin, y); y += 5;
+
+      // Focus
+      doc.setFontSize(8.5);
+      doc.setTextColor(60, 60, 60);
+      doc.setFont("helvetica", "normal");
+      const focusLines = doc.splitTextToSize(safeText(`Focus: ${w.focus}`), contentWidth);
+      for (const line of focusLines) {
+        checkPageBreak(5);
+        doc.text(line, margin, y); y += 4;
+      }
+
+      // Check-in
+      const checkLines = doc.splitTextToSize(safeText(`Check-in: ${w.checkIn}`), contentWidth);
+      for (const line of checkLines) {
+        checkPageBreak(5);
+        doc.text(line, margin, y); y += 4;
+      }
+      y += 4;
+    }
+    y += 4;
+  }
+
+  // ─── Consequence statement ───
+  checkPageBreak(20);
+  doc.setFontSize(9);
+  doc.setTextColor(60, 60, 60);
+  doc.setFont("helvetica", "normal");
+  const csLines = doc.splitTextToSize(safeText(data.consequenceStatement), contentWidth);
+  for (const line of csLines) {
+    checkPageBreak(5);
+    doc.text(line, margin, y); y += 4.2;
+  }
+  y += 14;
+
+  // ─── Signature lines ───
+  checkPageBreak(20);
+  doc.setDrawColor(100, 100, 100);
+  doc.setLineWidth(0.4);
+  doc.line(margin, y, margin + 55, y);
+  doc.line(margin + 80, y, margin + 115, y);
+  y += 5;
+  doc.setFontSize(9);
+  doc.setTextColor(60, 60, 60);
+  doc.text(data.employeeName, margin, y);
+  doc.text("Date", margin + 80, y);
+
+  // ─── Footer on all pages ───
+  const totalPages = doc.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.3);
+    doc.line(margin, pageHeight - 14, pageWidth - margin, pageHeight - 14);
+    doc.setFontSize(7);
+    doc.setTextColor(160, 160, 160);
+    doc.setFont("helvetica", "normal");
+    doc.text("Tiger Track | Tiger Data", margin, pageHeight - 9);
+    doc.text("Confidential", pageWidth / 2, pageHeight - 9, { align: "center" });
+    doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 9, { align: "right" });
+  }
+
+  const slug = data.employeeName.replace(/\s+/g, "-").toLowerCase();
+  doc.save(`tiger-track-pip-${slug}.pdf`);
+}
