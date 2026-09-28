@@ -12,7 +12,16 @@ import Google from "next-auth/providers/google";
  * be bypassed from the browser).
  */
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [Google],
+  providers: [
+    Google({
+      // Auth.js v5's bare `Google` provider reads AUTH_GOOGLE_ID /
+      // AUTH_GOOGLE_SECRET by convention. We use GOOGLE_CLIENT_ID /
+      // GOOGLE_CLIENT_SECRET instead (matching this org's other apps),
+      // so they need to be passed explicitly here.
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+  ],
   callbacks: {
     async signIn({ profile }) {
       const email = profile?.email?.toLowerCase() ?? "";
