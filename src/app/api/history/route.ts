@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/db";
+import { auth } from "@/auth";
 
 // Ensure the leveling_history table exists. Idempotent and cheap; called on
 // every read/write so a freshly-provisioned Ghost database doesn't silently
@@ -36,16 +37,18 @@ function describeError(err: unknown): { message: string; code?: string } {
   return { message: String(err) };
 }
 
-// GET: Retrieve leveling history for a specific user
+// GET: Retrieve leveling history for the signed-in user
 export async function GET(req: NextRequest) {
   try {
-    const userEmail = req.nextUrl.searchParams.get("userEmail");
+    // The email is taken from the server-side session, never from the
+    // request itself. Previously this endpoint trusted a ?userEmail=
+    // query param outright, so any visitor could read anyone else's
+    // leveling history just by changing that parameter.
+    const session = await auth();
+    const userEmail = session?.user?.email;
 
     if (!userEmail) {
-      return NextResponse.json(
-        { error: "userEmail is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     if (!process.env.DATABASE_URL) {
@@ -87,12 +90,18 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST: Save a new leveling decision
+// POST: Save a new leveling decision for the signed-in user
 export async function POST(req: NextRequest) {
   try {
+    const session = await auth();
+    const userEmail = session?.user?.email;
+
+    if (!userEmail) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
     const {
-      userEmail,
       jobTitle,
       department,
       jobDescription,
@@ -103,9 +112,9 @@ export async function POST(req: NextRequest) {
       questions,
     } = body;
 
-    if (!userEmail || !jobDescription || !recommendedLevel) {
+    if (!jobDescription || !recommendedLevel) {
       return NextResponse.json(
-        { error: "userEmail, jobDescription, and recommendedLevel are required" },
+        { error: "jobDescription and recommendedLevel are required" },
         { status: 400 }
       );
     }
