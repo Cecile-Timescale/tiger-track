@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import Header from "@/components/Header";
 import TabNav from "@/components/TabNav";
 import LevelRole from "@/components/LevelRole";
@@ -67,33 +68,31 @@ function AuthenticatedShell({
 }
 
 function HomeInner() {
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
-  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const { data: session, status } = useSession();
   const { resetAll } = useSessionState();
+  const lastUserRef = useRef<string | null>(null);
 
-  // Check for existing session on mount
+  const currentUser = session?.user?.email ?? null;
+
+  // Reset all per-tab state when a *different* user signs in, so a shared
+  // machine doesn't carry over the previous person's in-progress work.
   useEffect(() => {
-    const storedUser = sessionStorage.getItem("tiger_track_user");
-    if (storedUser) {
-      setCurrentUser(storedUser);
+    if (currentUser && currentUser !== lastUserRef.current) {
+      if (lastUserRef.current !== null) {
+        resetAll();
+      }
+      lastUserRef.current = currentUser;
     }
-    setIsCheckingSession(false);
-  }, []);
-
-  const handleAuthenticated = (email: string) => {
-    setCurrentUser(email);
-    // Reset all per-tab state so a new login starts fresh
-    resetAll();
-  };
+  }, [currentUser, resetAll]);
 
   const handleSignOut = () => {
-    sessionStorage.removeItem("tiger_track_user");
     clearSessionHistory();
-    setCurrentUser(null);
     resetAll();
+    lastUserRef.current = null;
+    signOut({ callbackUrl: "/" });
   };
 
-  if (isCheckingSession) {
+  if (status === "loading") {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
         <div className="text-gray-400 text-sm">Loading...</div>
@@ -102,7 +101,7 @@ function HomeInner() {
   }
 
   if (!currentUser) {
-    return <LoginGate onAuthenticated={handleAuthenticated} />;
+    return <LoginGate />;
   }
 
   return <AuthenticatedShell currentUser={currentUser} onSignOut={handleSignOut} />;

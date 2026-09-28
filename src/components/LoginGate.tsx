@@ -1,10 +1,7 @@
 "use client";
 
-import { useState } from "react";
-
-interface LoginGateProps {
-  onAuthenticated: (email: string) => void;
-}
+import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 
 function TigerDataLogo({ size = 72 }: { size?: number }) {
   return (
@@ -47,40 +44,19 @@ function TigerDataLogo({ size = 72 }: { size?: number }) {
   );
 }
 
-export default function LoginGate({ onAuthenticated }: LoginGateProps) {
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
-
-    const trimmedEmail = email.trim().toLowerCase();
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      setError("Please enter a valid email address.");
-      setIsLoading(false);
-      return;
-    }
-
-    // Check for @tigerdata.com domain
-    if (!trimmedEmail.endsWith("@tigerdata.com")) {
-      setError(
-        "Access is restricted to Tiger Data team members. Please use your @tigerdata.com email address."
-      );
-      setIsLoading(false);
-      return;
-    }
-
-    // Store in sessionStorage (cleared when browser/tab closes)
-    sessionStorage.setItem("tiger_track_user", trimmedEmail);
-    setIsLoading(false);
-    onAuthenticated(trimmedEmail);
-  };
+/**
+ * Sign-in screen for Tiger Track.
+ *
+ * This used to be a plain text field that only checked the shape of
+ * whatever email string the visitor typed — it never verified they
+ * actually owned that address, so anyone could type any *@tigerdata.com
+ * string and get in. It now hands off to real Google OAuth; the domain
+ * check happens server-side in the signIn callback in src/auth.ts and
+ * can't be spoofed from the browser.
+ */
+export default function LoginGate() {
+  const searchParams = useSearchParams();
+  const accessDenied = searchParams.get("error") === "AccessDenied";
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4 relative overflow-hidden">
@@ -98,8 +74,7 @@ export default function LoginGate({ onAuthenticated }: LoginGateProps) {
       <div
         className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full opacity-[0.06]"
         style={{
-          background:
-            "radial-gradient(circle, #F5FF80 0%, transparent 70%)",
+          background: "radial-gradient(circle, #F5FF80 0%, transparent 70%)",
         }}
       />
 
@@ -123,58 +98,58 @@ export default function LoginGate({ onAuthenticated }: LoginGateProps) {
         <div className="bg-[#141414] rounded-2xl border border-[#2a2a2a] p-7 shadow-2xl">
           <h2 className="text-lg font-semibold text-white mb-1">Sign In</h2>
           <p className="text-sm text-gray-400 mb-6">
-            Enter your Tiger Data email to continue.
+            Sign in with your Tiger Data Google account to continue.
           </p>
 
-          <form onSubmit={handleSubmit}>
-            <div className="mb-5">
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError(null);
-                }}
-                placeholder="you@tigerdata.com"
-                autoFocus
-                className="w-full px-4 py-3 bg-[#0a0a0a] border border-[#333] rounded-xl text-sm text-white placeholder-gray-500 focus:ring-2 focus:ring-[#F5FF80]/40 focus:border-[#F5FF80]/60 outline-none transition-all"
-              />
+          {accessDenied && (
+            <div className="mb-5 bg-red-950/40 border border-red-800/50 rounded-xl p-3">
+              <p className="text-sm text-red-400">
+                Access is restricted to Tiger Data team members. Please sign
+                in with your @tigerdata.com Google account.
+              </p>
             </div>
+          )}
 
-            {error && (
-              <div className="mb-5 bg-red-950/40 border border-red-800/50 rounded-xl p-3">
-                <p className="text-sm text-red-400">{error}</p>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={!email.trim() || isLoading}
-              className="w-full py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{
-                backgroundColor: "#F5FF80",
-                color: "#0a0a0a",
-              }}
-              onMouseEnter={(e) => {
-                if (!e.currentTarget.disabled) {
-                  e.currentTarget.style.backgroundColor = "#e8f270";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 4px 20px rgba(245, 255, 128, 0.25)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#F5FF80";
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            >
-              {isLoading ? "Signing in..." : "Sign In"}
-            </button>
-          </form>
+          <button
+            type="button"
+            onClick={() => signIn("google", { callbackUrl: "/" })}
+            className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl text-sm font-semibold transition-all"
+            style={{
+              backgroundColor: "#F5FF80",
+              color: "#0a0a0a",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#e8f270";
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 20px rgba(245, 255, 128, 0.25)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#F5FF80";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+              <path
+                fill="#FFC107"
+                d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"
+              />
+              <path
+                fill="#FF3D00"
+                d="M6.3 14.7l6.6 4.8C14.7 15.1 18.9 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4c-7.7 0-14.3 4.3-17.7 10.7z"
+              />
+              <path
+                fill="#4CAF50"
+                d="M24 44c5.5 0 10.4-2 14.1-5.3l-6.5-5.5C29.6 34.9 26.9 36 24 36c-5.3 0-9.7-3.4-11.3-8l-6.6 5.1C9.6 39.6 16.2 44 24 44z"
+              />
+              <path
+                fill="#1976D2"
+                d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.5 5.5C41.5 35.9 44 30.5 44 24c0-1.3-.1-2.7-.4-3.5z"
+              />
+            </svg>
+            Continue with Google
+          </button>
 
           <p className="text-xs text-gray-500 text-center mt-5">
             Access restricted to{" "}
